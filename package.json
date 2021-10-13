@@ -10,9 +10,9 @@
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "react-scripts": "3.2.0",
-    "slate": "^0.50.0",
-    "slate-react": "^0.50.0",
-    "typescript": "3.7.2"
+    "slate": "^0.66.5",
+    "slate-react": "^0.66.7",
+    "typescript": "^4.4.4"
   },
   "scripts": {
     "start": "react-scripts start",

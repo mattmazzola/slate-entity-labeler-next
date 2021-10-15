@@ -5,10 +5,10 @@ import './App.css'
 import { createEditor, Editor, BaseText, Text, Node, Transforms, BaseEditor } from 'slate'
 
 // Import the Slate components and React plugin.
-import { ReactEditor, Slate, Editable, withReact } from 'slate-react'
+import { ReactEditor, Slate, Editable, withReact, DefaultElement } from 'slate-react'
 
 type CustomElement = {
-  type: 'paragraph' | 'code'
+  type: 'paragraph' | 'code' | 'entity'
   children: CustomText[]
 }
 
@@ -48,7 +48,22 @@ const deserialize = (value: string) => {
     })
 }
 
-const initialValue: CustomElement[] = [
+const slatejsContentKey = 'slatejs-content-key'
+
+const isInline = (element: CustomElement) => {
+  let inline = false
+
+  switch (element.type) {
+    case 'entity': {
+      inline = true
+    }
+  }
+
+  return inline
+}
+
+
+const defaultValue: CustomElement[] = [
   {
     type: 'paragraph',
     children: [
@@ -59,9 +74,16 @@ const initialValue: CustomElement[] = [
   },
 ]
 
+const storedContent = localStorage.getItem(slatejsContentKey)
+const initialValue: CustomElement[] = storedContent
+  ? JSON.parse(storedContent)
+  : defaultValue
+
 const CustomEditor = {
+  ...Editor,
+
   isBoldMarkActive(editor: CustomEditor) {
-    const [match] = Editor.nodes(editor, {
+    const [match] = CustomEditor.nodes(editor, {
       match: n => (n as CustomText).bold === true,
       universal: true,
     })
@@ -70,12 +92,13 @@ const CustomEditor = {
   },
 
   isCodeBlockActive(editor: CustomEditor) {
-    const [match] = Editor.nodes(editor, {
+    const [match] = CustomEditor.nodes(editor, {
       match: n => (n as CustomElement).type === 'code',
     })
 
     return Boolean(match)
   },
+
 
   toggleBoldMark(editor: CustomEditor) {
     const isActive = CustomEditor.isBoldMarkActive(editor)
@@ -91,15 +114,83 @@ const CustomEditor = {
     Transforms.setNodes(
       editor,
       { type: isActive ? null : 'code' } as CustomElement,
-      { match: n => Editor.isBlock(editor, n) }
+      { match: n => CustomEditor.isBlock(editor, n) }
     )
   },
+
+  isEntity(editor: CustomEditor) {
+    const [match] = CustomEditor.nodes(editor, {
+      match: n => (n as CustomElement).type === 'entity',
+    })
+
+    return Boolean(match)
+  },
+
+  toggleBlockEntity(editor: CustomEditor) {
+    const isEntity = CustomEditor.isEntity(editor)
+
+    Transforms.setNodes(
+      editor,
+      { type: isEntity ? null : 'entity' } as CustomElement,
+      { match: n => Text.isText(n), split: true }
+    )
+  },
+
+  toggleInlineEntity(editor: CustomEditor) {
+    const isEntity = CustomEditor.isEntity(editor)
+
+    Transforms.setNodes(
+      editor,
+      { type: isEntity ? null : 'entity' } as CustomElement,
+      { match: n => Text.isText(n), split: true }
+    )
+  }
 }
 
+const withLabels = (editor: CustomEditor) => {
+  const { isInline } = editor
 
+  editor.isInline = (element: CustomElement) => {
+    switch (element.type) {
+      case 'entity': {
+        return true
+      }
+    }
+
+    return isInline(element)
+  }
+
+  return editor
+}
+
+const debounce = <T extends (...args: any[]) => any>(fn: T, time: number) => {
+  let timeoutId: NodeJS.Timeout
+
+  const debouncedFn = (...args: Parameters<T>) => {
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
+
+    timeoutId = setTimeout(() => {
+      fn(...args)
+    }, time)
+  }
+
+  return debouncedFn
+}
+
+const saveValue = (value: CustomElement[]) => {
+  // Save the value to Local Storage.
+  const content = JSON.stringify(value)
+  localStorage.setItem(slatejsContentKey, content)
+  localStorage.setItem('serializedContent', serialize(value as CustomElement[]))
+}
+
+const debouncedSaveValue = debounce(saveValue, 500)
+  
 const App: React.FC = () => {
   const [value, setValue] = React.useState<CustomElement[]>(initialValue)
-  const editor = React.useMemo(() => withReact(createEditor() as ReactEditor), [])
+  const editor = React.useMemo(() => withLabels(withReact(createEditor())), [])
 
   return (
     <div className="app">
@@ -107,70 +198,102 @@ const App: React.FC = () => {
         <h1>Slate@Next Tester 01</h1>
       </header>
       <main>
-        <Slate
-          editor={editor}
-          value={value}
-          onChange={value => {
-            setValue(value as CustomElement[])
-            const isAstChange = editor.operations.some(
-              op => 'set_selection' !== op.type
-            )
-            if (isAstChange) {
-              // Save the value to Local Storage.
-              const content = JSON.stringify(value)
-              localStorage.setItem('content', content)
-              localStorage.setItem('serializedContent', serialize(value as CustomElement[]))
-            }
-          }}
-        >
-          <div>
-            <button
-              onMouseDown={event => {
-                event.preventDefault()
-                CustomEditor.toggleBoldMark(editor)
-              }}
-            >
-              Bold
-            </button>
-            <button
-              onMouseDown={event => {
-                event.preventDefault()
-                CustomEditor.toggleCodeBlock(editor)
-              }}
-            >
-              Code Block
-            </button>
-          </div>
-          <Editable
-            renderElement={renderElement}
-            renderLeaf={renderLeaf}
-            onKeyDown={event => {
-              if (event.key === '&') {
-                // Prevent the ampersand character from being inserted.
-                event.preventDefault()
-                // Execute the `insertText` method when the event occurs.
-                editor.insertText('and')
-              }
-
-              if (!event.ctrlKey) {
-                return
-              }
-
-              switch (event.key) {
-                case '`': {
-                  event.preventDefault()
-                  CustomEditor.toggleCodeBlock(editor)
-                  break
-                }
-                case 'b': {
-                  event.preventDefault()
-                  CustomEditor.toggleBoldMark(editor)
-                  break
-                }
+        <h2>Editor</h2>
+        <section>
+          <Slate
+            editor={editor}
+            value={value}
+            onChange={value => {
+              setValue(value as CustomElement[])
+              const isAstChange = editor.operations.some(
+                op => 'set_selection' !== op.type
+              )
+              if (isAstChange) {
+                debouncedSaveValue(value as CustomElement[])
               }
             }}
-          />
-        </Slate>
+          >
+            <div>
+              <button
+                onMouseDown={event => {
+                  event.preventDefault()
+                  setValue(defaultValue)
+                }}
+              >
+                Reset
+              </button>
+              <button
+                onMouseDown={event => {
+                  event.preventDefault()
+                  CustomEditor.toggleBoldMark(editor)
+                }}
+              >
+                Bold
+              </button>
+              <button
+                onMouseDown={event => {
+                  event.preventDefault()
+                  CustomEditor.toggleCodeBlock(editor)
+                }}
+              >
+                Code Block
+              </button>
+              <button
+                onMouseDown={event => {
+                  event.preventDefault()
+                  CustomEditor.toggleBlockEntity(editor)
+                }}
+              >
+                Create Block Entity
+              </button>
+              <button
+                onMouseDown={event => {
+                  event.preventDefault()
+                  CustomEditor.toggleInlineEntity(editor)
+                }}
+              >
+                Create Inline Entity
+              </button>
+            </div>
+            <Editable
+              renderElement={renderElement}
+              renderLeaf={renderLeaf}
+              onKeyDown={event => {
+                if (event.key === '&') {
+                  // Prevent the ampersand character from being inserted.
+                  event.preventDefault()
+                  // Execute the `insertText` method when the event occurs.
+                  editor.insertText('and')
+                }
+
+                if (!event.ctrlKey) {
+                  return
+                }
+
+                switch (event.key) {
+                  case '`': {
+                    event.preventDefault()
+                    CustomEditor.toggleCodeBlock(editor)
+                    break
+                  }
+                  case 'b': {
+                    event.preventDefault()
+                    CustomEditor.toggleBoldMark(editor)
+                    break
+                  }
+                }
+              }}
+            />
+          </Slate>
+        </section>
+        <section>
+          <h2>Slate Value:</h2>
+          <div className="code-container">
+            <pre>
+              <code>{JSON.stringify(value, null, 4)}</code>
+            </pre>
+          </div>
+        </section>
       </main>
     </div>
   )
@@ -184,20 +307,25 @@ const CodeElement: React.FC<any> = props => {
   )
 }
 
-const DefaultElement: React.FC<any> = props => {
-  return <p {...props.attributes}>{props.children}</p>
+const EntityElement: React.FC<any> = props => {
+  return (
+    <div {...props.attributes}>
+      {props.children}
+    </div>
+  )
 }
 
 const renderElement = (props: any) => {
   switch (props.element.type) {
     case 'code':
       return <CodeElement {...props} />
+    case 'entity':
+      return <EntityElement {...props} />
     default:
       return <DefaultElement {...props} />
   }
 }
 
-// Define a React component to render leaves with bold text.
 const Leaf: React.FC<any> = props => {
   return (
     <span
@@ -209,7 +337,6 @@ const Leaf: React.FC<any> = props => {
   )
 }
 
-// Define a leaf rendering function that is memoized with `useCallback`.
 const renderLeaf = (props: any) => {
   return <Leaf {...props} />
 }

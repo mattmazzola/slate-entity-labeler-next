@@ -25,4 +25,20 @@ export const defaultValue: CustomElement[] = [
             },
         ],
     },
+    {
+        type: "paragraph",
+        children: [
+            {
+                text: ""
+            }
+        ]
+    },
+    {
+        type: 'paragraph',
+        children: [
+            {
+                text: 'This is the third line of text'
+            },
+        ],
+    },
 ]

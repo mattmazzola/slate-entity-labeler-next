@@ -7,6 +7,7 @@ export type CustomElement = {
 }
 
 export type CustomText = BaseText & {
+    type?: 'entity'
     bold?: boolean
 }
 
@@ -68,12 +69,10 @@ export const CustomEditor = {
     },
 
     toggleBlockEntity(editor: CustomEditor) {
-        const isEntity = CustomEditor.isEntity(editor)
-
         Transforms.wrapNodes(
             editor,
-            { type: isEntity ? null : 'entity' } as CustomElement,
-            { match: n => true, split: true }
+            { type: 'entity' } as CustomElement,
+            { split: true }
         )
     },
 

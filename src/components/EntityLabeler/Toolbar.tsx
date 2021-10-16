@@ -1,5 +1,6 @@
 import React from 'react'
 import { useSlate } from 'slate-react'
+import styled from 'styled-components'
 import { CustomEditor } from './utils'
 
 type Props = {
@@ -9,47 +10,60 @@ type Props = {
 export const Toolbar: React.FC<Props> = props => {
     const editor = useSlate()
     return (
-        <div>
-            <button
+        <Wrapper>
+            <Button
                 onMouseDown={event => {
                     event.preventDefault()
                     props.onReset()
                 }}
             >
                 Reset
-            </button>
-            <button
+            </Button>
+            <Button
                 onMouseDown={event => {
                     event.preventDefault()
                     CustomEditor.toggleBoldMark(editor)
                 }}
             >
                 Bold
-            </button>
-            <button
+            </Button>
+            <Button
                 onMouseDown={event => {
                     event.preventDefault()
                     CustomEditor.toggleCodeBlock(editor)
                 }}
             >
                 Code Block
-            </button>
-            <button
+            </Button>
+            <Button
                 onMouseDown={event => {
                     event.preventDefault()
                     CustomEditor.toggleBlockEntity(editor)
                 }}
             >
                 Create Block Entity
-            </button>
-            <button
+            </Button>
+            <Button
                 onMouseDown={event => {
                     event.preventDefault()
                     CustomEditor.toggleInlineEntity(editor)
                 }}
             >
                 Create Inline Entity
-            </button>
-        </div>
+            </Button>
+        </Wrapper>
     )
 }
+
+const Wrapper = styled.div`
+    display: flex;
+    gap: 1rem;
+`
+
+const Button = styled.button`
+    padding: 0.5em 1em;
+    background: none;
+    border-radius: 3px;
+    border: 1px solid var(--color-white);
+    color: var(--color-white);
+`

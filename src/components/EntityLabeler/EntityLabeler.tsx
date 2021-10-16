@@ -47,36 +47,44 @@ const EntityLabeler: React.FC<Props> = props => {
                 }
             }}
         >
-            <Toolbar onReset={() => setValue(defaultValue)} />
-            <SlateWrapper>
-                <Editable
-                    renderElement={renderElement}
-                    renderLeaf={renderLeaf}
-                    onKeyDown={event => {
-                        if (!event.ctrlKey) {
-                            return
-                        }
+            <ToolbarWrapper>
+                <Toolbar onReset={() => setValue(defaultValue)} />
+                <EditorWrapper>
+                    <Editable
+                        renderElement={renderElement}
+                        renderLeaf={renderLeaf}
+                        onKeyDown={event => {
+                            if (!event.ctrlKey) {
+                                return
+                            }
 
-                        switch (event.key) {
-                            case '`': {
-                                event.preventDefault()
-                                CustomEditor.toggleCodeBlock(editor)
-                                break
+                            switch (event.key) {
+                                case '`': {
+                                    event.preventDefault()
+                                    CustomEditor.toggleCodeBlock(editor)
+                                    break
+                                }
+                                case 'b': {
+                                    event.preventDefault()
+                                    CustomEditor.toggleBoldMark(editor)
+                                    break
+                                }
                             }
-                            case 'b': {
-                                event.preventDefault()
-                                CustomEditor.toggleBoldMark(editor)
-                                break
-                            }
-                        }
-                    }}
-                />
-            </SlateWrapper>
+                        }}
+                    />
+                </EditorWrapper>
+            </ToolbarWrapper>
         </Slate>
     )
 }
 
-const SlateWrapper = styled.div`
+const ToolbarWrapper = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+`
+
+const EditorWrapper = styled.div`
   [data-slate-editor="true"] {
     border: 1px solid var(--color-white);
     border-radius: 3px;

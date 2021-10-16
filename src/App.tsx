@@ -8,15 +8,15 @@ const App: React.FC = () => {
   return (
     <Wrapper>
       <header>
-        <h1>Slate@Next</h1>
+        <h1>Slate Entity Labeler</h1>
       </header>
       <main>
-        <h2>Entity Labeler</h2>
+        <h2>Editor</h2>
         <section>
           <EntityLabeler onChange={value => setValue(value)}/>
         </section>
         <section>
-          <h2>Slate Value:</h2>
+          <h2>Value:</h2>
           <CodeContainer>
             <pre>
               <code>{value ? JSON.stringify(value, null, 4) : "Empty"}</code>

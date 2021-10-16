@@ -12,6 +12,12 @@
   margin: 0;
 }
 
+[data-is-entity="true"] {
+  display: inline-block;
+  border-radius: 3px;
+  background: hsla(20deg 50% 50% / 0.3);
+} 
+
 .code-container {
   font-size: 1rem;
 }

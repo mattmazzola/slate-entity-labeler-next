@@ -4,7 +4,9 @@ import styled from 'styled-components'
 import { CustomEditor } from './utils'
 
 type Props = {
-    onReset: () => void
+    onClear: () => void
+    onSave: () => void
+    onLoad: () => void
 }
 
 export const Toolbar: React.FC<Props> = props => {
@@ -12,40 +14,49 @@ export const Toolbar: React.FC<Props> = props => {
     return (
         <Wrapper>
             <Button
-                onMouseDown={event => {
-                    event.preventDefault()
-                    props.onReset()
+                onClick={() => {
+                    props.onClear()
                 }}
             >
                 Reset
             </Button>
             <Button
-                onMouseDown={event => {
-                    event.preventDefault()
+                onClick={() => {
+                    props.onSave()
+                }}
+            >
+                Save
+            </Button>
+            <Button
+                onClick={() => {
+                    props.onLoad()
+                }}
+            >
+                Load
+            </Button>
+            <Button
+                onClick={() => {
                     CustomEditor.toggleBoldMark(editor)
                 }}
             >
                 Bold
             </Button>
             <Button
-                onMouseDown={event => {
-                    event.preventDefault()
+                onClick={() => {
                     CustomEditor.toggleCodeBlock(editor)
                 }}
             >
                 Code Block
             </Button>
             <Button
-                onMouseDown={event => {
-                    event.preventDefault()
+                onClick={() => {
                     CustomEditor.toggleBlockEntity(editor)
                 }}
             >
                 Create Block Entity
             </Button>
             <Button
-                onMouseDown={event => {
-                    event.preventDefault()
+                onMouseDown={() => {
                     CustomEditor.toggleInlineEntity(editor)
                 }}
             >

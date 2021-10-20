@@ -8,11 +8,15 @@ import { defaultValue } from './defaultValue'
 import styled from 'styled-components'
 
 const slatejsContentKey = 'slatejs-content-key'
-const storedContent = localStorage.getItem(slatejsContentKey)
-const initialValue: CustomElement[] = storedContent
-    ? JSON.parse(storedContent)
-    : defaultValue
 
+const getSavedValueOrDefault = () => {
+    const storedContent = localStorage.getItem(slatejsContentKey)
+    const value: CustomElement[] = storedContent
+        ? JSON.parse(storedContent)
+        : defaultValue
+
+    return value
+}
 const saveValue = (value: CustomElement[]) => {
     // Save the value to Local Storage.
     const content = JSON.stringify(value)
@@ -23,13 +27,26 @@ const saveValue = (value: CustomElement[]) => {
 const debouncedSaveValue = debounce(saveValue, 500)
 
 type Props = {
+    text: string,
     onChange: (value: CustomElement[]) => void
 }
 
 const EntityLabeler: React.FC<Props> = props => {
-    const [value, setValue] = React.useState<CustomElement[]>(initialValue)
+    const [value, setValue] = React.useState<CustomElement[]>(() => getSavedValueOrDefault())
     const editor = React.useMemo(() => withLabels(withReact(createEditor())), [])
     const debouncedOnChange = React.useCallback(debounce(props.onChange, 500), [props.onChange])
+    const onSaveValue = () => {
+        if (typeof value === 'object') {
+            saveValue(value)
+        }
+    }
+
+    const onLoadValue = () => {
+        const value = getSavedValueOrDefault()
+
+        setValue(value)
+    }
+
     return (
         <Slate
             editor={editor}
@@ -48,7 +65,11 @@ const EntityLabeler: React.FC<Props> = props => {
             }}
         >
             <ToolbarWrapper>
-                <Toolbar onReset={() => setValue(defaultValue)} />
+                <Toolbar
+                    onClear={() => setValue(defaultValue)}
+                    onSave={onSaveValue}
+                    onLoad={onLoadValue}
+                />
                 <EditorWrapper>
                     <Editable
                         renderElement={renderElement}

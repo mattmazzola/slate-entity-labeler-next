@@ -2,7 +2,14 @@ import React from 'react'
 import styled from 'styled-components'
 import EntityLabeler, { CustomElement } from './components/EntityLabeler'
 
+const defaultText = `This is the first line of text
+
+This is the second line of text
+
+This is the third line of text`
+
 const App: React.FC = () => {
+  const [text, setText] = React.useState<string>(defaultText)
   const [value, setValue] = React.useState<CustomElement[] | undefined>()
 
   return (
@@ -13,7 +20,10 @@ const App: React.FC = () => {
       <main>
         <h2>Editor</h2>
         <section>
-          <EntityLabeler onChange={value => setValue(value)}/>
+          <EntityLabeler
+            text={text}
+            onChange={value => setValue(value)}
+          />
         </section>
         <section>
           <h2>Value:</h2>
@@ -31,6 +41,7 @@ const App: React.FC = () => {
 const Wrapper = styled.div`
   padding: 2rem;
   font-size: 2rem;
+  position: relative;
 `
 
 const CodeContainer = styled.div`

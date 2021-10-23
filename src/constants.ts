@@ -17,6 +17,10 @@ export const COLORS = {
     entities: {
         base: `hsl(120deg 50% 80% / 0.4)`,
         inline: `hsl(10deg 50% 80% / 0.4)`
+    },
+    token: {
+        base: `hsl(180deg 50% 80% / 0.4)`,
+        inline: `hsl(30deg 50% 80% / 0.4)`
     }
 }
 

@@ -1,15 +1,16 @@
 import React from 'react'
 import styled from 'styled-components'
-import EntityLabeler, { CustomElement } from './components/EntityLabeler'
+import EntityLabeler, { CustomElement, IEntity } from './components/EntityLabeler'
 
-const defaultText = `This is the first line of text
-
+const defaultText = `
+This is the first line of text
 This is the second line of text
-
-This is the third line of text`
+This is the third line of text
+`.trim()
 
 const App: React.FC = () => {
   const [text, setText] = React.useState<string>(defaultText)
+  const [entities, setEntities] = React.useState<IEntity<unknown>[]>([])
   const [value, setValue] = React.useState<CustomElement[] | undefined>()
 
   return (
@@ -22,7 +23,8 @@ const App: React.FC = () => {
         <section>
           <EntityLabeler
             text={text}
-            onChange={value => setValue(value)}
+            entities={entities}
+            onChangeValue={value => setValue(value)}
           />
         </section>
         <section>

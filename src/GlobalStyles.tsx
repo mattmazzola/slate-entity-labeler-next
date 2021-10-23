@@ -43,14 +43,16 @@ const GlobalStyles = createGlobalStyle`
         --color-primary: ${COLORS.primary};
         --color-secondary: ${COLORS.secondary};
         --color-urgent: ${COLORS.urgent};
-    
+
         --color-entities-base: ${COLORS.entities.base};
         --color-entities-inline: ${COLORS.entities.inline};
-      
+        --color-token-base: ${COLORS.token.base};
+        --color-token-inline: ${COLORS.token.inline};
+
         --font-weight-normal: ${WEIGHTS.normal};
         --font-weight-medium: ${WEIGHTS.medium};
         --font-weight-bold: ${WEIGHTS.bold};
-      
+
         --font-family-serif: ${FAMILIES.serif};
         --font-family-sans-serif: ${FAMILIES.sansSerif};
         --font-family-code: ${FAMILIES.code};

@@ -1,14 +1,12 @@
-import { Editor, Element, BaseText, Text, Transforms, BaseEditor, Node } from 'slate'
+import { Editor, Element, BaseElement, BaseText, Text, Transforms, BaseEditor, Node } from 'slate'
 import { ReactEditor } from 'slate-react'
 
 export type CustomElement = {
-    type: 'paragraph' | 'entity'
+    type: 'paragraph' | 'entity' | 'token'
     children: (CustomText | CustomElement)[]
 }
 
 export type CustomText = BaseText & {
-    type?: 'entity'
-    bold?: boolean
 }
 
 export type CustomEditor = ReactEditor & BaseEditor
@@ -94,12 +92,16 @@ export const debounce = <T extends (...args: any[]) => any>(fn: T, time: number)
     return debouncedFn
 }
 
+export enum TokenType {
+    Token = "token",
+    EntityPlaceholder = "entityPlaceholder"
+}
+
 export interface IToken {
+    type: TokenType.Token
     text: string
     isSelectable: boolean
     startIndex: number
-    endIndex: number
-    length: number
 }
 
 /**
@@ -115,26 +117,34 @@ export const tokenizeText = (text: string, tokenRegex: RegExp): IToken[] => {
         return tokens
     }
 
-    let result: RegExpExecArray | null = null
+    let regexMatchResult: RegExpExecArray | null = null
     let lastIndex = tokenRegex.lastIndex
     // tslint:disable-next-line:no-conditional-assignment
-    while ((result = tokenRegex.exec(text)) !== null) {
-        const matchedText = text.substring(lastIndex, result.index)
+    while ((regexMatchResult = tokenRegex.exec(text)) !== null) {
+        // The match is the token separator which is not selectable
+        // meaning the non matched is selectable
+        const matchedText = text.substring(lastIndex, regexMatchResult.index)
+        const nonSelectableToken: IToken = {
+            type: TokenType.Token,
+            text: matchedText,
+            isSelectable: true,
+            startIndex: lastIndex,
+            // endIndex: result.index,
+            // length: matchedText.length
+        }
+
+        const selectableToken: IToken = {
+            type: TokenType.Token,
+            text: regexMatchResult[0],
+            isSelectable: false,
+            startIndex: regexMatchResult.index,
+            // endIndex: result.index + result[0].length,
+            // length: result[0].length
+        }
+
         tokens.push(...[
-            {
-                text: matchedText,
-                isSelectable: true,
-                startIndex: lastIndex,
-                endIndex: result.index,
-                length: matchedText.length
-            },
-            {
-                text: result[0],
-                isSelectable: false,
-                startIndex: result.index,
-                endIndex: result.index + result[0].length,
-                length: result[0].length
-            }
+            nonSelectableToken,
+            selectableToken
         ])
 
         lastIndex = tokenRegex.lastIndex
@@ -142,27 +152,24 @@ export const tokenizeText = (text: string, tokenRegex: RegExp): IToken[] => {
 
     const endIndex = text.length
     const endText = text.substring(lastIndex, endIndex)
-    tokens.push({
+    const nonToken: IToken = {
+        type: TokenType.Token,
         text: endText,
         isSelectable: true,
         startIndex: lastIndex,
-        endIndex,
-        length: endText.length
-    })
+        // endIndex,
+        // length: endText.length
+    }
+
+    tokens.push(nonToken)
 
     return tokens
 }
 
 export interface IEntity<T> {
-    startIndex: number
-    endIndex: number
-    length: number
-    data: T
-}
-
-interface IEntityWithTokenIndices extends IEntity<unknown> {
     startTokenIndex: number
-    endTokenIndex: number
+    tokenLength: number
+    data: T
 }
 
 /**
@@ -172,7 +179,10 @@ interface IEntityWithTokenIndices extends IEntity<unknown> {
  * @param text plain text
  * @param customEntities array of entities
  */
-export const convertEntitiesAndTextToTokenizedEditorValue = (text: string, customEntities: IEntity<unknown>[], inlineNodeType: string) => {
+export const convertEntitiesAndTextToTokenizedEditorValue = (
+    text: string,
+    customEntities: IEntity<unknown>[]
+) => {
     const normalizedEntities = normalizeEntities(customEntities)
     const tokenizedText = tokenizeText(text, tokenizeRegex)
     const labeledTokens = labelTokens(tokenizedText, normalizedEntities)
@@ -182,16 +192,19 @@ export const convertEntitiesAndTextToTokenizedEditorValue = (text: string, custo
 
 export const normalizeEntities = <T>(x: T): T => { return x }
 
+// This is a marker for entity before it is confirmed by the user
+// Normal entities have tokens as children, but these entities only mark the tokens with an entity
+// This mean they do not change the value or DOM structure
 interface IEntityPlaceholder {
+    type: TokenType.EntityPlaceholder
     entity: IEntity<unknown>
     tokens: IToken[]
 }
 
-export type TokenArray = (IToken | IEntityPlaceholder)[]
+type TokenOrEntity = IToken | IEntityPlaceholder
 
-export const labelTokens = (tokens: IToken[], customEntities: IEntity<unknown>[]): TokenArray => {
-    const entitiesWithTokenIndices = addTokenIndicesToCustomEntities(tokens, customEntities)
-    return wrapTokensWithEntities(tokens, entitiesWithTokenIndices)
+export const labelTokens = (tokens: IToken[], customEntities: IEntity<unknown>[]): TokenOrEntity[] => {
+    return wrapTokensWithEntities(tokens, customEntities)
 }
 
 /**
@@ -211,54 +224,6 @@ export const findLastIndex = <T>(xs: T[], f: (x: T) => boolean): number => {
 }
 
 /**
- * For each customEntity, find the indicies of the start and end tokens within the entity boundaries
- *
- *         [   custom entity  ]
- * [token0 token1 token2 token3 token4 token5]
- *         [1,               3]
- *
- * @param tokens Array of Tokens
- * @param customEntities Array of Custom Entities
- */
-export const addTokenIndicesToCustomEntities = (tokens: IToken[], customEntities: IEntity<unknown>[]): IEntityWithTokenIndices[] => {
-    return customEntities.map<IEntityWithTokenIndices>(ce => {
-        const startTokenIndex = tokens.findIndex(t => t.isSelectable === true && ce.startIndex < t.endIndex && t.endIndex <= ce.endIndex)
-        const endTokenIndex = findLastIndex(tokens, t => t.isSelectable === true && ce.startIndex <= t.startIndex && t.startIndex < ce.endIndex)
-        if (startTokenIndex === -1 || endTokenIndex === -1) {
-            console.warn(`Could not find valid token for custom entity: `, ce)
-        }
-
-        //         if (startTokenIndex !== -1 && endTokenIndex !== -1) {
-        //             const startToken = tokens[startTokenIndex]
-        //             const endToken = tokens[endTokenIndex]
-
-        //             console.log(`
-        // token indices found:
-        // ce.startIndex: ${ce.startIndex}
-        // ce.endIndex: ${ce.endIndex}
-
-        // startTokenIndex: ${startTokenIndex}
-        // startToken.isSelectable: ${startToken.isSelectable}
-        // startToken.startIndex: ${startToken.startIndex}
-        // startToken.endIndex: ${startToken.endIndex}
-
-        // endTokenIndex: ${endTokenIndex}
-        // endToken.isSelectable: ${endToken.isSelectable}
-        // endToken.startIndex: ${endToken.startIndex}
-        // endToken.endIndex: ${endToken.endIndex}
-        // `)
-        //         }
-
-        return {
-            ...ce,
-            startTokenIndex,
-            endTokenIndex: endTokenIndex + 1
-        }
-    })
-}
-
-
-/**
  * (IToken[], ICustomEntityWithTokenIndicies[]) => (IToken | IEntityPlaceholder)[]
  * Given tokens and custom entities associated with tokens, replace tokens with entities placeholders
  * These entity placeholders eventually get converted to slate inline segments
@@ -268,36 +233,46 @@ export const addTokenIndicesToCustomEntities = (tokens: IToken[], customEntities
  * [token0, [token1, token2, token3], token4, token5, token6]
  *
  * @param tokens Array of Tokens
- * @param customEntitiesWithTokens Array of Custom Entities with Token Indicies
+ * @param entities Array of Custom Entities with Token Indicies
  */
-export const wrapTokensWithEntities = (tokens: IToken[], customEntitiesWithTokens: IEntityWithTokenIndices[]): TokenArray => {
+export const wrapTokensWithEntities = (tokens: IToken[], entities: IEntity<unknown>[]): TokenOrEntity[] => {
     // If there are no entities than no work to do, return tokens
-    if (customEntitiesWithTokens.length === 0) {
+    if (entities.length === 0) {
         return tokens
     }
 
-    const sortedCustomEntities = [...customEntitiesWithTokens].sort((a, b) => a.startIndex - b.startIndex)
+    const tokenArray: TokenOrEntity[] = []
+    const sortedEntities = [...entities].sort((a, b) => a.startTokenIndex - b.startTokenIndex)
+
     // Include all non labeled tokens before first entity
-    const firstCet = sortedCustomEntities[0]
-    const tokenArray: TokenArray = [...tokens.slice(0, firstCet.startTokenIndex)]
+    const firstEntity = sortedEntities[0]
+    const initialTokens = [...tokens.slice(0, firstEntity.startTokenIndex)]
+    tokenArray.push(...initialTokens)
 
-    for (const [i, cet] of Array.from(sortedCustomEntities.entries())) {
+    // This requires entities to be non overlapping since each entity contains other tokens
+    for (const [i, cet] of Array.from(sortedEntities.entries())) {
         // push labeled tokens
-        tokenArray.push({
+        const endTokenIndex = cet.startTokenIndex + cet.tokenLength
+        const entity: IEntityPlaceholder = {
+            type: TokenType.EntityPlaceholder,
             entity: cet,
-            tokens: tokens.slice(cet.startTokenIndex, cet.endTokenIndex)
-        })
+            tokens: tokens.slice(cet.startTokenIndex, endTokenIndex)
+        }
 
-        // push non labeled tokens in between this and next entity
-        if (i !== sortedCustomEntities.length - 1) {
-            const nextCet = sortedCustomEntities[i + 1]
-            tokenArray.push(...tokens.slice(cet.endTokenIndex, nextCet.startTokenIndex))
+        tokenArray.push(entity)
+
+        // If not at the last entity push non labeled tokens in between this and next entity
+        if (i !== sortedEntities.length - 1) {
+            const nextEntity = sortedEntities[i + 1]
+            tokenArray.push(...tokens.slice(endTokenIndex, nextEntity.startTokenIndex))
         }
     }
 
     // Include all non labeled tokens after last entity
-    const lastCet = sortedCustomEntities[sortedCustomEntities.length - 1]
-    tokenArray.push(...tokens.slice(lastCet.endTokenIndex))
+    const lastEntity = sortedEntities[sortedEntities.length - 1]
+    const lastSelectedTokenIndex = lastEntity.startTokenIndex + lastEntity.tokenLength
+    const endTokens = tokens.slice(lastSelectedTokenIndex)
+    tokenArray.push(...endTokens)
 
     return tokenArray
 }
@@ -313,83 +288,75 @@ export const defaultValue: CustomElement[] = [
     }
 ]
 
-export const convertToSlateValue = (tokensWithEntities: TokenArray[]): CustomElement[] => {
+export const convertToSlateValue = (tokensWithEntities: TokenOrEntity[][]): CustomElement[] => {
     // If there are no tokens, just return empty text node to ensure valid SlateValue object
     // In other words non-void parent nodes must have a child.
     if (tokensWithEntities.length === 0) {
         return defaultValue
     }
-    
-    const elements: CustomElement[] = []
+
+    const paragraphElements: CustomElement[] = []
 
     for (const tokenOrEntityRow of tokensWithEntities) {
 
-        const children: CustomElement[] = []
+        const tokensOrEntityElements: (CustomText | CustomElement)[] = []
         for (const tokenOrEntity of tokenOrEntityRow) {
+            if (tokenOrEntity.type === TokenType.EntityPlaceholder) {
+                const tokenElements = tokenOrEntity.tokens
+                    .map<CustomElement>(token => {
+                        return {
+                            type: "token",
+                            children: [
+                                {
+                                    text: token.text
+                                }
+                            ]
+                        }
+                    })
 
-            if ((tokenOrEntity as IEntityPlaceholder).entity) {
-                const entityPlaceholder: IEntityPlaceholder = tokenOrEntity as any
-                const nestedNodes = convertToSlateNodes(entityPlaceholder.tokens, inlineNodeType)
-                elements.push({
-                    "kind": "inline",
-                    "type": inlineNodeType,
-                    "isVoid": false,
-                    "data": entityPlaceholder.entity.data,
-                    "nodes": nestedNodes
-                })
+                const entityElemnt: CustomElement = {
+                    type: "entity",
+                    children: tokenElements
+                }
+
+                tokensOrEntityElements.push(entityElemnt)
             }
             else {
-                const token: IToken = tokenOrEntity as any
-                if (token.isSelectable) {
-                    elements.push({
-                        "kind": "inline",
-                        "type": models.NodeType.TokenNodeType,
-                        "isVoid": false,
-                        "data": token,
-                        "nodes": [
+                if (tokenOrEntity.isSelectable) {
+                    const tokenElement: CustomElement = {
+                        type: "token",
+                        children: [
                             {
-                                "kind": "text",
-                                "leaves": [
-                                    {
-                                        "kind": "leaf",
-                                        "text": token.text,
-                                        "marks": []
-                                    }
-                                ]
+                                text: tokenOrEntity.text
                             }
                         ]
-                    })
+                    }
+                    tokensOrEntityElements.push(tokenElement)
                 }
                 else {
-                    elements.push({
-                        "kind": "text",
-                        "leaves": [
-                            {
-                                "kind": "leaf",
-                                "text": token.text,
-                                "marks": []
-                            }
-                        ]
-                    })
+                    const textElement: CustomText = {
+                        text: tokenOrEntity.text
+                    }
+
+                    tokensOrEntityElements.push(textElement)
                 }
             }
         }
 
         const paragraphElement: CustomElement = {
             type: 'paragraph',
-            children
+            children: tokensOrEntityElements
         }
 
-        elements.push(paragraphElement)
-
+        paragraphElements.push(paragraphElement)
     }
 
-    return elements
+    return paragraphElements
 }
 
 /**
  * Compare every entity to every other entity. If any have overlapping indices then log warning.
- * 
+ *
  * @param customEntities List of custom entities
  */
 export const warnAboutOverlappingEntities = (customEntities: IEntity<object>[]): boolean => {
@@ -397,16 +364,19 @@ export const warnAboutOverlappingEntities = (customEntities: IEntity<object>[]):
         return customEntities
             .slice(i + 1)
             .some((otherEntity, _, es) => {
-                // Overlap start index
+                // Other entity overlaps start index of current entity
                 //  [ other entity ]
                 //            [ entity ]
-                const overlapStartIndex = (otherEntity.startIndex <= entity.startIndex
-                    && otherEntity.endIndex >= entity.startIndex)
-                // Overlap end index
+                const entityEndTokenIndex = entity.startTokenIndex + entity.tokenLength
+                const otherEntityEndTokenIndex = otherEntity.startTokenIndex + otherEntity.tokenLength
+                const overlapStartIndex = (otherEntity.startTokenIndex <= entity.startTokenIndex
+                    && otherEntityEndTokenIndex >= entity.startTokenIndex)
+
+                // Other entity overlaps end index of current entity
                 //    [ other entity ]
                 // [entity]
-                const overlapEndIndex = (otherEntity.startIndex <= entity.endIndex
-                    && otherEntity.endIndex >= entity.endIndex)
+                const overlapEndIndex = (otherEntity.startTokenIndex <= entityEndTokenIndex
+                    && otherEntityEndTokenIndex >= entityEndTokenIndex)
 
                 const overlap = overlapStartIndex || overlapEndIndex
 

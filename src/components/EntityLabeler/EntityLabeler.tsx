@@ -4,8 +4,9 @@ import { createEditor } from 'slate'
 import { Slate, Editable, withReact, DefaultElement, RenderLeafProps } from 'slate-react'
 import { debounce, CustomElement, serialize, withLabels, CustomEditor } from './utils'
 import { Toolbar } from './Toolbar'
-import { defaultValue } from './defaultValue'
+import { defaultValue } from './utils'
 import styled from 'styled-components'
+import { convertEntitiesAndTextToTokenizedEditorValue, IEntity } from '.'
 
 const slatejsContentKey = 'slatejs-content-key'
 
@@ -24,17 +25,17 @@ const saveValue = (value: CustomElement[]) => {
     localStorage.setItem('serializedContent', serialize(value as CustomElement[]))
 }
 
-const debouncedSaveValue = debounce(saveValue, 500)
-
 type Props = {
     text: string,
-    onChange: (value: CustomElement[]) => void
+    entities: IEntity<unknown>[]
+    onChangeValue: (value: CustomElement[]) => void
 }
 
 const EntityLabeler: React.FC<Props> = props => {
-    const [value, setValue] = React.useState<CustomElement[]>(() => getSavedValueOrDefault())
+    const [value, setValue] = React.useState<CustomElement[]>(() => convertEntitiesAndTextToTokenizedEditorValue(props.text, props.entities))
+
     const editor = React.useMemo(() => withLabels(withReact(createEditor())), [])
-    const debouncedOnChange = React.useCallback(debounce(props.onChange, 500), [props.onChange])
+    const debouncedOnChange = React.useCallback(debounce(props.onChangeValue, 500), [props.onChangeValue])
     const onSaveValue = () => {
         if (typeof value === 'object') {
             saveValue(value)
@@ -59,7 +60,6 @@ const EntityLabeler: React.FC<Props> = props => {
                     op => 'set_selection' !== op.type
                 )
                 if (isAstChange) {
-                    debouncedSaveValue(customValue)
                     debouncedOnChange(customValue)
                 }
             }}
@@ -73,25 +73,6 @@ const EntityLabeler: React.FC<Props> = props => {
                 <EditorWrapper>
                     <Editable
                         renderElement={renderElement}
-                        renderLeaf={renderLeaf}
-                        onKeyDown={event => {
-                            if (!event.ctrlKey) {
-                                return
-                            }
-
-                            switch (event.key) {
-                                case '`': {
-                                    event.preventDefault()
-                                    CustomEditor.toggleCodeBlock(editor)
-                                    break
-                                }
-                                case 'b': {
-                                    event.preventDefault()
-                                    CustomEditor.toggleBoldMark(editor)
-                                    break
-                                }
-                            }
-                        }}
                     />
                 </EditorWrapper>
             </ToolbarWrapper>
@@ -111,20 +92,20 @@ const EditorWrapper = styled.div`
     border-radius: 3px;
     padding: 0.5rem;
   }
-  
+
   [data-slate-editor="true"] :is(p, pre) {
     padding: 0;
     margin: 0;
   }
 `
 
-const CodeElement: React.FC<any> = props => {
-    return (
-        <pre {...props.attributes}>
-            <code>{props.children}</code>
-        </pre>
-    )
-}
+const EntityWrapper = styled.div`
+    display: inline-block;
+    border-radius: 3px;
+    background: var(--color-entities-base);
+    margin: -1x;
+    border 1px solid var(--color-entities-base);
+`
 
 const EntityElement: React.FC<any> = props => {
     return (
@@ -134,60 +115,31 @@ const EntityElement: React.FC<any> = props => {
     )
 }
 
-const EntityWrapper = styled.div`
+const TokenWrapper = styled.div`
     display: inline-block;
     border-radius: 3px;
-    background: var(--color-entities-base);
+    background: var(--color-token-base);
     margin: -2px;
-    border 1px solid var(--color-entities-base);
+    border 1px solid var(--color-token-base);
 `
+
+const TokenElement: React.FC<any> = props => {
+    return (
+        <TokenWrapper {...props.attributes} data-is-token={true}>
+            {props.children}
+        </TokenWrapper>
+    )
+}
+
 
 const renderElement = (props: any) => {
     switch (props.element.type) {
-        case 'code':
-            return <CodeElement {...props} />
         case 'entity':
             return <EntityElement {...props} />
+        case 'token':
+            return <TokenElement {...props} />
         default:
             return <DefaultElement {...props} />
-    }
-}
-
-const Leaf: React.FC<any> = props => {
-    return (
-        <span
-            {...props.attributes}
-            style={{ fontWeight: props.leaf.bold ? 'bold' : 'normal' }}
-        >
-            {props.children}
-        </span>
-    )
-}
-
-const EntityLeaf: React.FC<any> = props => {
-    return (
-        <EntityLeafWrapper
-            {...props.attributes}
-            data-is-inline-entity={true}
-        >
-            {props.children}
-        </EntityLeafWrapper>
-    )
-}
-
-const EntityLeafWrapper = styled.span`
-    border-radius: 3px;
-    background: var(--color-entities-inline);
-    margin: -2px;
-    border 1px solid var(--color-entities-inline);
-`
-
-const renderLeaf = (props: RenderLeafProps) => {
-    switch (props.leaf.type) {
-        case 'entity':
-            return <EntityLeaf {...props} />
-        default:
-            return <Leaf {...props} />
     }
 }
 

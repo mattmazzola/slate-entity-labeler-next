@@ -36,31 +36,10 @@ export const Toolbar: React.FC<Props> = props => {
             </Button>
             <Button
                 onClick={() => {
-                    CustomEditor.toggleBoldMark(editor)
-                }}
-            >
-                Bold
-            </Button>
-            <Button
-                onClick={() => {
-                    CustomEditor.toggleCodeBlock(editor)
-                }}
-            >
-                Code Block
-            </Button>
-            <Button
-                onClick={() => {
                     CustomEditor.toggleBlockEntity(editor)
                 }}
             >
                 Create Block Entity
-            </Button>
-            <Button
-                onMouseDown={() => {
-                    CustomEditor.toggleInlineEntity(editor)
-                }}
-            >
-                Create Inline Entity
             </Button>
         </Wrapper>
     )
@@ -77,4 +56,5 @@ const Button = styled.button`
     border-radius: 3px;
     border: 1px solid var(--color-white);
     color: var(--color-white);
+    cursor: pointer;
 `

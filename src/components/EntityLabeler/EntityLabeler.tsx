@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { createEditor, Operation } from 'slate'
+import { createEditor, SelectionOperation } from 'slate'
 import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from 'slate-react'
 
 import { convertEntitiesAndTextToTokenizedEditorValue, IEntity, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels, batch } from './utils'
@@ -24,18 +24,19 @@ const saveValue = (value: CustomElement[]) => {
     localStorage.setItem('serializedContent', serialize(value as CustomElement[]))
 }
 
-const selectionChange = (selectionOperationsOrBatchedOptions: Operation[] | Operation[][]) => {
-
-    let selectionOperations: Operation[]
-    const firstElement = selectionOperationsOrBatchedOptions[0]
-    if (Array.isArray(firstElement)) {
-        selectionOperations = selectionOperationsOrBatchedOptions.flatMap(o => (o as Operation[])[0])
-    }
-    else {
-        selectionOperations = selectionOperationsOrBatchedOptions as Operation[]
+const selectionChange = (...selectionOperations: SelectionOperation[]) => {
+    if (!(selectionOperations.length >= 2)) {
+        throw new Error(`Operations array must have at least 2 items. It's length is: ${selectionOperations.length}`)
     }
 
+    const firstSelectionOperation = selectionOperations.shift()!
+    const lastSelectionOperation = selectionOperations.pop()!
     console.log(`Batched operations: `, selectionOperations)
+
+    // const firstAnchor = firstSelectionOperation.newProperties.anchor
+    // const lastFocus = lastSelectionOperation.newProperties.focus
+    console.log(`First Anchor: `, firstSelectionOperation)
+    console.log(`Last Focus: `, lastSelectionOperation)
 }
 
 export enum LabelMode {
@@ -144,11 +145,11 @@ const EntityLabeler: React.FC<Props> = props => {
                     return
                 }
 
-                const selectionOperations = editor.operations.filter(op => selectionOperationType === op.type)
+                const selectionOperations: SelectionOperation[] = editor.operations.filter(op => selectionOperationType === op.type) as any[]
                 const containsSelectionOperations = selectionOperations.length > 0
                 if (props.labelMode === LabelMode.Label && containsSelectionOperations) {
-                    console.log('Operations: ', editor.operations)
-                    batchedSelectionChange(selectionOperations)
+                    // console.log('Operations: ', editor.operations)
+                    batchedSelectionChange(...selectionOperations)
                 }
 
                 const customValue = value as CustomElement[]

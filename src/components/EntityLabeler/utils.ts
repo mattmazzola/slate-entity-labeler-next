@@ -116,7 +116,8 @@ export const batch = <T extends (...args: any[]) => any>(fn: T, time: number) =>
         }
 
         timeoutId = setTimeout(() => {
-            fn(argsList)
+            const flattenedArgs = argsList.flatMap(args => args)
+            fn(...flattenedArgs)
             argsList = []
         }, time)
     }

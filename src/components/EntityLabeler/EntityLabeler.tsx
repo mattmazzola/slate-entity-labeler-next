@@ -26,17 +26,18 @@ const saveValue = (value: CustomElement[]) => {
 
 const selectionChange = (...selectionOperations: SelectionOperation[]) => {
     if (!(selectionOperations.length >= 2)) {
-        throw new Error(`Operations array must have at least 2 items. It's length is: ${selectionOperations.length}`)
+        console.error(new Error(`Operations array must have at least 2 items. It's length is: ${selectionOperations.length}`))
+        return
     }
 
     const firstSelectionOperation = selectionOperations.shift()!
     const lastSelectionOperation = selectionOperations.pop()!
-    console.log(`Batched operations: `, selectionOperations)
+    // console.log(`Batched operations: `, selectionOperations)
 
-    // const firstAnchor = firstSelectionOperation.newProperties.anchor
-    // const lastFocus = lastSelectionOperation.newProperties.focus
-    console.log(`First Anchor: `, firstSelectionOperation)
-    console.log(`Last Focus: `, lastSelectionOperation)
+    const firstAnchor = firstSelectionOperation.newProperties?.anchor
+    const lastFocus = lastSelectionOperation.newProperties?.focus
+    console.log(`First Anchor: `, firstAnchor)
+    console.log(`Last Focus: `, lastFocus)
 }
 
 export enum LabelMode {

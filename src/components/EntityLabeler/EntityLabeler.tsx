@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { createEditor, SelectionOperation } from 'slate'
+import { BaseSelection, createEditor, SelectionOperation } from 'slate'
 import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from 'slate-react'
 
 import { convertEntitiesAndTextToTokenizedEditorValue, IEntity, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels, batch } from './utils'
@@ -24,20 +24,8 @@ const saveValue = (value: CustomElement[]) => {
     localStorage.setItem('serializedContent', serialize(value as CustomElement[]))
 }
 
-const selectionChange = (...selectionOperations: SelectionOperation[]) => {
-    if (!(selectionOperations.length >= 2)) {
-        console.error(new Error(`Operations array must have at least 2 items. It's length is: ${selectionOperations.length}`))
-        return
-    }
-
-    const firstSelectionOperation = selectionOperations.shift()!
-    const lastSelectionOperation = selectionOperations.pop()!
-    // console.log(`Batched operations: `, selectionOperations)
-
-    const firstAnchor = firstSelectionOperation.newProperties?.anchor
-    const lastFocus = lastSelectionOperation.newProperties?.focus
-    console.log(`First Anchor: `, firstAnchor)
-    console.log(`Last Focus: `, lastFocus)
+const selectionChange = (selection: BaseSelection) => {
+    console.log(`Selection Change: `, selection)
 }
 
 export enum LabelMode {
@@ -59,12 +47,12 @@ type Props = {
 }
 
 const EntityLabeler: React.FC<Props> = props => {
-    const debouncedOnChange = React.useCallback(debounce(props.onChangeValue, 500), [props.onChangeValue])
-    const batchedSelectionChange = React.useCallback(batch(selectionChange, 500), [])
+    const debouncedValueChange = React.useCallback(debounce(props.onChangeValue, 500), [props.onChangeValue])
+    const debouncedSelectionChange = React.useCallback(debounce(selectionChange, 500), [])
     const [value, setValue] = React.useState<CustomElement[]>(defaultValue)
     const lastLabelModeRef = React.useRef<LabelMode | undefined>()
     React.useEffect(() => {
-        debouncedOnChange(value)
+        debouncedValueChange(value)
     }, [value])
 
     React.useEffect(() => {
@@ -150,7 +138,7 @@ const EntityLabeler: React.FC<Props> = props => {
                 const containsSelectionOperations = selectionOperations.length > 0
                 if (props.labelMode === LabelMode.Label && containsSelectionOperations) {
                     // console.log('Operations: ', editor.operations)
-                    batchedSelectionChange(...selectionOperations)
+                    debouncedSelectionChange(editor.selection)
                 }
 
                 const customValue = value as CustomElement[]
@@ -158,7 +146,7 @@ const EntityLabeler: React.FC<Props> = props => {
 
                 const isAstChange = editor.operations.some(op => selectionOperationType !== op.type)
                 if (isAstChange) {
-                    debouncedOnChange(customValue)
+                    debouncedValueChange(customValue)
                 }
             }}
         >

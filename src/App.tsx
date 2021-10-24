@@ -1,17 +1,22 @@
 import React from 'react'
 import styled from 'styled-components'
-import EntityLabeler, { CustomElement, IEntity } from './components/EntityLabeler'
+import EntityLabeler, { CustomElement, IEntity, DebugMode, LabelMode } from './components/EntityLabeler'
 
-const defaultText = `
-This is the first line of text
-This is the second line of text
-This is the third line of text
-`.trim()
+const defaultText = `OK test this`.trim()
 
 const App: React.FC = () => {
   const [text, setText] = React.useState<string>(defaultText)
+  const [labelMode, setLabelMode] = React.useState<LabelMode>(LabelMode.EditText)
+  const [debugMode, setDebugMode] = React.useState<DebugMode>(DebugMode.Debug)
   const [entities, setEntities] = React.useState<IEntity<unknown>[]>([])
   const [value, setValue] = React.useState<CustomElement[] | undefined>()
+  const onToggleMode = () => {
+    setDebugMode(m => {
+      return m === DebugMode.Debug
+        ? DebugMode.Normal
+        : DebugMode.Debug
+    })
+  }
 
   return (
     <Wrapper>
@@ -20,9 +25,24 @@ const App: React.FC = () => {
       </header>
       <main>
         <h2>Editor</h2>
+        <div>
+          Label Mode: {labelMode}
+          <div>
+            <button onClick={() => setLabelMode(LabelMode.EditText)}>Edit Text</button>
+            <button onClick={() => setLabelMode(LabelMode.Label)}>Label Entities</button>
+          </div>
+        </div>
+        <div>
+          Debug Mode: {debugMode}
+          <div>
+            <button onClick={onToggleMode}>Toggle Mode</button>
+          </div>
+        </div>
         <section>
           <EntityLabeler
             text={text}
+            labelMode={labelMode}
+            debugMode={debugMode}
             entities={entities}
             onChangeValue={value => setValue(value)}
           />

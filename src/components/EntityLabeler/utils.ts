@@ -22,6 +22,13 @@ declare module 'slate' {
 export const CustomEditor = {
     ...Editor,
 
+    isParagraph(editor: CustomEditor) {
+        const [match] = CustomEditor.nodes(editor, {
+            match: n => (n as CustomElement).type === 'paragraph',
+        })
+
+        return Boolean(match)
+    },
     isEntity(editor: CustomEditor) {
         const [match] = CustomEditor.nodes(editor, {
             match: n => (n as CustomElement).type === 'entity',
@@ -45,7 +52,11 @@ export const withLabels = (editor: CustomEditor) => {
     editor.isInline = (element: CustomElement) => {
         switch (element.type) {
             case 'entity': {
-                console.log({ element })
+                console.log('Entity: ', { element })
+                return true
+            }
+            case 'token': {
+                // console.log('Token: ', { element })
                 return true
             }
         }
@@ -66,11 +77,12 @@ export const serialize = (value: CustomElement[]) => {
     )
 }
 
-export const deserialize = (value: string) => {
+export const deserialize = (value: string): CustomElement[] => {
     // Return a value array of children derived by splitting the string.
     return value.split('\n')
         .map(line => {
             return {
+                type: 'paragraph',
                 children: [{ text: line }],
             }
         })
@@ -184,10 +196,15 @@ export const convertEntitiesAndTextToTokenizedEditorValue = (
     customEntities: IEntity<unknown>[]
 ) => {
     const normalizedEntities = normalizeEntities(customEntities)
-    const tokenizedText = tokenizeText(text, tokenizeRegex)
-    const labeledTokens = labelTokens(tokenizedText, normalizedEntities)
-    // TODO: Support multi-line (multiple token arrays)
-    return convertToSlateValue([labeledTokens])
+    const lines = text.split('\n')
+    const tokenizedLlines = lines
+        .map(line => {
+            const tokenizedLine = tokenizeText(line, tokenizeRegex)
+            const labeledTokens = labelTokens(tokenizedLine, normalizedEntities)
+            return labeledTokens
+        })
+
+    return convertToSlateValue(tokenizedLlines)
 }
 
 export const normalizeEntities = <T>(x: T): T => { return x }

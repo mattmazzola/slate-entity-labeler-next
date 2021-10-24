@@ -1,12 +1,12 @@
 import React from 'react'
 
 import { createEditor } from 'slate'
-import { Slate, Editable, withReact, DefaultElement, RenderLeafProps } from 'slate-react'
+import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from 'slate-react'
 import { debounce, CustomElement, serialize, withLabels, CustomEditor } from './utils'
 import { Toolbar } from './Toolbar'
 import { defaultValue } from './utils'
 import styled from 'styled-components'
-import { convertEntitiesAndTextToTokenizedEditorValue, IEntity } from '.'
+import { convertEntitiesAndTextToTokenizedEditorValue, CustomText, deserialize, IEntity } from '.'
 
 const slatejsContentKey = 'slatejs-content-key'
 
@@ -18,6 +18,7 @@ const getSavedValueOrDefault = () => {
 
     return value
 }
+
 const saveValue = (value: CustomElement[]) => {
     // Save the value to Local Storage.
     const content = JSON.stringify(value)
@@ -25,17 +26,77 @@ const saveValue = (value: CustomElement[]) => {
     localStorage.setItem('serializedContent', serialize(value as CustomElement[]))
 }
 
+export enum LabelMode {
+    EditText = 'EditText',
+    Label = 'Label'
+}
+
+export enum DebugMode {
+    Normal = 'Normal',
+    Debug = 'Debug'
+}
+
 type Props = {
     text: string,
     entities: IEntity<unknown>[]
+    labelMode: LabelMode
+    debugMode: DebugMode
     onChangeValue: (value: CustomElement[]) => void
 }
 
 const EntityLabeler: React.FC<Props> = props => {
-    const [value, setValue] = React.useState<CustomElement[]>(() => convertEntitiesAndTextToTokenizedEditorValue(props.text, props.entities))
+    const debouncedOnChange = React.useCallback(debounce(props.onChangeValue, 500), [props.onChangeValue])
+    const [value, setValue] = React.useState<CustomElement[]>(defaultValue)
+
+    React.useEffect(() => {
+        let newValue: CustomElement[]
+
+        switch(props.labelMode) {
+            case LabelMode.EditText: {
+                const text: CustomText = {
+                    text: props.text
+                }
+
+                const paragraphElement: CustomElement = {
+                    type: 'paragraph',
+                    children: [text]
+                }
+                newValue = [paragraphElement]
+                setValue(newValue)
+                break;
+            }
+            case LabelMode.Label: {
+                newValue = convertEntitiesAndTextToTokenizedEditorValue(props.text, props.entities)
+                setValue(newValue)
+                break;
+            }
+        }
+
+        debouncedOnChange(newValue)
+    }, [props.text, props.entities.length, props.labelMode])
+
+    React.useEffect(() => {
+        const serializedValue = serialize(value)
+        let newValue: CustomElement[]
+
+        switch(props.labelMode) {
+            case LabelMode.EditText: {
+                newValue = deserialize(serializedValue)
+                setValue(newValue)
+                break;
+            }
+            case LabelMode.Label: {
+                newValue = convertEntitiesAndTextToTokenizedEditorValue(serializedValue, [])
+                setValue(newValue)
+                break;
+            }
+        }
+
+        debouncedOnChange(newValue)
+    }, [props.labelMode])
 
     const editor = React.useMemo(() => withLabels(withReact(createEditor())), [])
-    const debouncedOnChange = React.useCallback(debounce(props.onChangeValue, 500), [props.onChangeValue])
+
     const onSaveValue = () => {
         if (typeof value === 'object') {
             saveValue(value)
@@ -48,11 +109,33 @@ const EntityLabeler: React.FC<Props> = props => {
         setValue(value)
     }
 
+    const editOperationTypes = [
+        'remove_text',
+        'remove_node',
+        'insert_text',
+        'insert_node',
+    ]
+
     return (
         <Slate
             editor={editor}
             value={value}
             onChange={value => {
+
+                const eitOperations = editor.operations.filter(op => {
+                    return editOperationTypes.find(editOpType => editOpType === op.type)
+                })
+
+                const containsEditOperation = eitOperations.length > 0
+                // console.log('Operations: ', editor.operations.map(o => o.type))
+                // console.log(`containsEditOperation: `, containsEditOperation)
+
+                // If in label mode, prevent text modifications but allow entities to be created
+                if (props.labelMode === LabelMode.Label && containsEditOperation) {
+                    console.warn(`Edit operations blocked: `, eitOperations.map(o => o.type))
+                    return
+                }
+
                 const customValue = value as CustomElement[]
                 setValue(customValue)
 
@@ -72,7 +155,7 @@ const EntityLabeler: React.FC<Props> = props => {
                 />
                 <EditorWrapper>
                     <Editable
-                        renderElement={renderElement}
+                        renderElement={renderElementProps => renderElement(props.debugMode, renderElementProps)}
                     />
                 </EditorWrapper>
             </ToolbarWrapper>
@@ -99,45 +182,68 @@ const EditorWrapper = styled.div`
   }
 `
 
-const EntityWrapper = styled.div`
+const EntityWrapper = styled.div<{ mode: DebugMode }>`
     display: inline-block;
     border-radius: 3px;
-    background: var(--color-entities-base);
-    margin: -1x;
-    border 1px solid var(--color-entities-base);
+
+    ${props => props.mode === DebugMode.Debug
+        ? `
+        background: var(--color-entities-base);
+        margin: -1x;
+        border 1px solid var(--color-entities-base);
+        `
+        : ''}
 `
 
-const EntityElement: React.FC<any> = props => {
+type ElementProps = RenderElementProps & {
+    mode: DebugMode
+}
+
+const EntityElement: React.FC<ElementProps> = props => {
     return (
-        <EntityWrapper {...props.attributes} data-is-entity={true}>
+        <EntityWrapper
+            {...props.attributes}
+            data-is-entity={true}
+            mode={props.mode}
+        >
             {props.children}
         </EntityWrapper>
     )
 }
 
-const TokenWrapper = styled.div`
+const TokenWrapper = styled.div<{ mode: DebugMode }>`
     display: inline-block;
     border-radius: 3px;
-    background: var(--color-token-base);
-    margin: -2px;
-    border 1px solid var(--color-token-base);
+
+    ${props => props.mode === DebugMode.Debug
+        ? `
+        background: var(--color-token-base);
+        margin: -1px;
+        border 1px solid var(--color-token-base);
+        `
+        : ''
+    }
 `
 
-const TokenElement: React.FC<any> = props => {
+const TokenElement: React.FC<ElementProps> = props => {
     return (
-        <TokenWrapper {...props.attributes} data-is-token={true}>
+        <TokenWrapper
+            {...props.attributes}
+            data-is-token={true}
+            mode={props.mode}
+        >
             {props.children}
         </TokenWrapper>
     )
 }
 
 
-const renderElement = (props: any) => {
+const renderElement = (mode: DebugMode, props: RenderElementProps) => {
     switch (props.element.type) {
         case 'entity':
-            return <EntityElement {...props} />
+            return <EntityElement {...props} mode={mode} />
         case 'token':
-            return <TokenElement {...props} />
+            return <TokenElement {...props} mode={mode} />
         default:
             return <DefaultElement {...props} />
     }

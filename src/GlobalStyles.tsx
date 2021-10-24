@@ -14,6 +14,8 @@ const GlobalStyles = createGlobalStyle`
         background-color: var(--color-gray-900);
         color: var(--color-white);
         font-size: 16px;
+
+        -webkit-font-smoothing: antialiased;
     }
 
     code {
@@ -22,9 +24,8 @@ const GlobalStyles = createGlobalStyle`
 
     *,
     *:before,
-    *:after {        box-sizing: border-box;
-        line-height: 1.5;
-        -webkit-font-smoothing: antialiased;
+    *:after {
+        box-sizing: border-box;
     }
 
     #root {

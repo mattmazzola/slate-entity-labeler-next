@@ -47,52 +47,40 @@ type Props = {
 const EntityLabeler: React.FC<Props> = props => {
     const debouncedOnChange = React.useCallback(debounce(props.onChangeValue, 500), [props.onChangeValue])
     const [value, setValue] = React.useState<CustomElement[]>(defaultValue)
+    React.useEffect(() => {
+        debouncedOnChange(value)
+    }, [value])
 
     React.useEffect(() => {
-        let newValue: CustomElement[]
-
         switch(props.labelMode) {
             case LabelMode.EditText: {
-                const text: CustomText = {
-                    text: props.text
-                }
-
-                const paragraphElement: CustomElement = {
-                    type: 'paragraph',
-                    children: [text]
-                }
-                newValue = [paragraphElement]
+                const newValue = deserialize(props.text)
                 setValue(newValue)
                 break;
             }
             case LabelMode.Label: {
-                newValue = convertEntitiesAndTextToTokenizedEditorValue(props.text, props.entities)
+                const newValue = convertEntitiesAndTextToTokenizedEditorValue(props.text, props.entities)
                 setValue(newValue)
                 break;
             }
         }
-
-        debouncedOnChange(newValue)
     }, [props.text, props.entities.length, props.labelMode])
 
     React.useEffect(() => {
         const serializedValue = serialize(value)
-        let newValue: CustomElement[]
 
         switch(props.labelMode) {
             case LabelMode.EditText: {
-                newValue = deserialize(serializedValue)
+                const newValue = deserialize(serializedValue)
                 setValue(newValue)
                 break;
             }
             case LabelMode.Label: {
-                newValue = convertEntitiesAndTextToTokenizedEditorValue(serializedValue, [])
+                const newValue = convertEntitiesAndTextToTokenizedEditorValue(serializedValue, [])
                 setValue(newValue)
                 break;
             }
         }
-
-        debouncedOnChange(newValue)
     }, [props.labelMode])
 
     const editor = React.useMemo(() => withLabels(withReact(createEditor())), [])

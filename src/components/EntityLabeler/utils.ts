@@ -121,7 +121,7 @@ export interface IToken {
  * positive match would specify characters which are tokens. Only chose this because it seems like a much
  * simpler regex / smaller set of characters, but I imagine alternative approach would work
  */
-export const tokenizeRegex = /\s+|[.?,!]/g
+export const tokenizeRegex = /[\s.?,!]+/g
 
 export const tokenizeText = (text: string, tokenRegex: RegExp): IToken[] => {
     const tokens: IToken[] = []

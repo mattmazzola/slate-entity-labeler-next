@@ -2,7 +2,10 @@ import React from 'react'
 import styled from 'styled-components'
 import EntityLabeler, { CustomElement, IEntity, DebugMode, LabelMode } from './components/EntityLabeler'
 
-const defaultText = `OK test this`.trim()
+const defaultText = `
+OK test this
+Fourth word second word
+`.trim()
 
 const App: React.FC = () => {
   const [text, setText] = React.useState<string>(defaultText)

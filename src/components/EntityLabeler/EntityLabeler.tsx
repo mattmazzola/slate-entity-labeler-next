@@ -1,12 +1,10 @@
 import React from 'react'
-
-import { createEditor } from 'slate'
-import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from 'slate-react'
-import { debounce, CustomElement, serialize, withLabels, CustomEditor } from './utils'
-import { Toolbar } from './Toolbar'
-import { defaultValue } from './utils'
 import styled from 'styled-components'
-import { convertEntitiesAndTextToTokenizedEditorValue, CustomText, deserialize, IEntity } from '.'
+import { createEditor, Operation } from 'slate'
+import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from 'slate-react'
+
+import { convertEntitiesAndTextToTokenizedEditorValue, IEntity, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels, batch } from './utils'
+import { Toolbar } from './Toolbar'
 
 const slatejsContentKey = 'slatejs-content-key'
 
@@ -24,6 +22,20 @@ const saveValue = (value: CustomElement[]) => {
     const content = JSON.stringify(value)
     localStorage.setItem(slatejsContentKey, content)
     localStorage.setItem('serializedContent', serialize(value as CustomElement[]))
+}
+
+const selectionChange = (selectionOperationsOrBatchedOptions: Operation[] | Operation[][]) => {
+
+    let selectionOperations: Operation[]
+    const firstElement = selectionOperationsOrBatchedOptions[0]
+    if (Array.isArray(firstElement)) {
+        selectionOperations = selectionOperationsOrBatchedOptions.flatMap(o => (o as Operation[])[0])
+    }
+    else {
+        selectionOperations = selectionOperationsOrBatchedOptions as Operation[]
+    }
+
+    console.log(`Batched operations: `, selectionOperations)
 }
 
 export enum LabelMode {
@@ -46,41 +58,49 @@ type Props = {
 
 const EntityLabeler: React.FC<Props> = props => {
     const debouncedOnChange = React.useCallback(debounce(props.onChangeValue, 500), [props.onChangeValue])
+    const batchedSelectionChange = React.useCallback(batch(selectionChange, 500), [])
     const [value, setValue] = React.useState<CustomElement[]>(defaultValue)
+    const lastLabelModeRef = React.useRef<LabelMode | undefined>()
     React.useEffect(() => {
         debouncedOnChange(value)
     }, [value])
 
     React.useEffect(() => {
-        switch(props.labelMode) {
+        console.log(`Text or Entities changed: `, props.text)
+        switch (props.labelMode) {
             case LabelMode.EditText: {
                 const newValue = deserialize(props.text)
                 setValue(newValue)
-                break;
+                break
             }
             case LabelMode.Label: {
                 const newValue = convertEntitiesAndTextToTokenizedEditorValue(props.text, props.entities)
                 setValue(newValue)
-                break;
+                break
             }
         }
-    }, [props.text, props.entities.length, props.labelMode])
+    }, [props.text, props.entities.length])
 
     React.useEffect(() => {
-        const serializedValue = serialize(value)
+        if (lastLabelModeRef.current && lastLabelModeRef.current !== props.labelMode) {
+            console.log(`Label Mode Changed: `, props.labelMode)
+            const serializedValue = serialize(value)
 
-        switch(props.labelMode) {
-            case LabelMode.EditText: {
-                const newValue = deserialize(serializedValue)
-                setValue(newValue)
-                break;
-            }
-            case LabelMode.Label: {
-                const newValue = convertEntitiesAndTextToTokenizedEditorValue(serializedValue, [])
-                setValue(newValue)
-                break;
+            switch (props.labelMode) {
+                case LabelMode.EditText: {
+                    const newValue = deserialize(serializedValue)
+                    setValue(newValue)
+                    break
+                }
+                case LabelMode.Label: {
+                    const newValue = convertEntitiesAndTextToTokenizedEditorValue(serializedValue, [])
+                    setValue(newValue)
+                    break
+                }
             }
         }
+
+        lastLabelModeRef.current = props.labelMode
     }, [props.labelMode])
 
     const editor = React.useMemo(() => withLabels(withReact(createEditor())), [])
@@ -104,32 +124,37 @@ const EntityLabeler: React.FC<Props> = props => {
         'insert_node',
     ]
 
+    const selectionOperationType = 'set_selection'
+
     return (
         <Slate
             editor={editor}
             value={value}
             onChange={value => {
 
-                const eitOperations = editor.operations.filter(op => {
+                const editOperations = editor.operations.filter(op => {
                     return editOperationTypes.find(editOpType => editOpType === op.type)
                 })
 
-                const containsEditOperation = eitOperations.length > 0
-                // console.log('Operations: ', editor.operations.map(o => o.type))
-                // console.log(`containsEditOperation: `, containsEditOperation)
-
-                // If in label mode, prevent text modifications but allow entities to be created
+                const containsEditOperation = editOperations.length > 0
+                // If in label mode and contains edit operations, terminate early to prevent text modifications
+                // Note: Still allow operations to Label Entities / WrapNodes
                 if (props.labelMode === LabelMode.Label && containsEditOperation) {
-                    console.warn(`Edit operations blocked: `, eitOperations.map(o => o.type))
+                    console.warn(`Edit operations blocked: `, editOperations.map(o => o.type))
                     return
+                }
+
+                const selectionOperations = editor.operations.filter(op => selectionOperationType === op.type)
+                const containsSelectionOperations = selectionOperations.length > 0
+                if (props.labelMode === LabelMode.Label && containsSelectionOperations) {
+                    console.log('Operations: ', editor.operations)
+                    batchedSelectionChange(selectionOperations)
                 }
 
                 const customValue = value as CustomElement[]
                 setValue(customValue)
 
-                const isAstChange = editor.operations.some(
-                    op => 'set_selection' !== op.type
-                )
+                const isAstChange = editor.operations.some(op => selectionOperationType !== op.type)
                 if (isAstChange) {
                     debouncedOnChange(customValue)
                 }

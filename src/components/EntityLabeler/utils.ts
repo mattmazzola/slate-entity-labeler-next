@@ -104,6 +104,26 @@ export const debounce = <T extends (...args: any[]) => any>(fn: T, time: number)
     return debouncedFn
 }
 
+export const batch = <T extends (...args: any[]) => any>(fn: T, time: number) => {
+    let timeoutId: NodeJS.Timeout
+    let argsList: Parameters<T>[] = []
+
+    const debouncedFn = (...args: Parameters<T>) => {
+        argsList.push(args)
+
+        if (timeoutId) {
+            clearTimeout(timeoutId)
+        }
+
+        timeoutId = setTimeout(() => {
+            fn(argsList)
+            argsList = []
+        }, time)
+    }
+
+    return debouncedFn
+}
+
 export enum TokenType {
     Token = "token",
     EntityPlaceholder = "entityPlaceholder"

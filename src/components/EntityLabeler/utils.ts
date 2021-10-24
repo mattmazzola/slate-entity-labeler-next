@@ -1,4 +1,4 @@
-import { Editor, Element, BaseElement, BaseText, Text, Transforms, BaseEditor, Node } from 'slate'
+import { Editor, BaseText, Transforms, BaseEditor, Node } from 'slate'
 import { ReactEditor } from 'slate-react'
 
 export type CustomElement = {
@@ -98,27 +98,6 @@ export const debounce = <T extends (...args: any[]) => any>(fn: T, time: number)
 
         timeoutId = setTimeout(() => {
             fn(...args)
-        }, time)
-    }
-
-    return debouncedFn
-}
-
-export const batch = <T extends (...args: any[]) => any>(fn: T, time: number) => {
-    let timeoutId: NodeJS.Timeout
-    let argsList: Parameters<T>[] = []
-
-    const debouncedFn = (...args: Parameters<T>) => {
-        argsList.push(args)
-
-        if (timeoutId) {
-            clearTimeout(timeoutId)
-        }
-
-        timeoutId = setTimeout(() => {
-            const flattenedArgs = argsList.flatMap(args => args)
-            fn(...flattenedArgs)
-            argsList = []
         }, time)
     }
 

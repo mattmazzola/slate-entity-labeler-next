@@ -30,16 +30,6 @@ export const WEIGHTS = {
     bold: 700,
 }
 
-const BREAKPOINTS = {
-    tabletMin: 550,
-    laptopMin: 1100,
-    desktopMin: 1500,
-}
-
-export const QUERIES = {
-
-}
-
 export const FAMILIES = {
     serif: '"Crimson Pro", Georgia, serif',
     sansSerif:

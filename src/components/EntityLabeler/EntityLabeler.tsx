@@ -1,10 +1,11 @@
 import React from 'react'
 import styled from 'styled-components'
-import { BaseSelection, createEditor, SelectionOperation } from 'slate'
+import { BaseSelection, createEditor, Editor, Node, Path, Point, Range, SelectionOperation, Transforms } from 'slate'
 import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from 'slate-react'
 
-import { convertEntitiesAndTextToTokenizedEditorValue, IEntity, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels, batch } from './utils'
+import { convertEntitiesAndTextToTokenizedEditorValue, IEntity, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels } from './utils'
 import { Toolbar } from './Toolbar'
+import { CustomText } from '.'
 
 const slatejsContentKey = 'slatejs-content-key'
 
@@ -24,8 +25,49 @@ const saveValue = (value: CustomElement[]) => {
     localStorage.setItem('serializedContent', serialize(value as CustomElement[]))
 }
 
-const selectionChange = (selection: BaseSelection) => {
-    console.log(`Selection Change: `, selection)
+const selectionChange = (selection: BaseSelection, editor: Editor) => {
+    if (!selection) {
+        return
+    }
+
+    // console.log(`Selection Change: `, selection)
+
+    const start = Range.start(selection)
+    const end = Range.end(selection)
+    // console.log(`Start Change: `, start)
+    // console.log(`End Change: `, end)
+
+    const rootNode = editor as unknown as Node
+    const getFirstTokenAncestor = (path: Path) => {
+        const firstTokenAncestor = [...Node.ancestors(rootNode, path, { reverse: true })]
+            .find(([node, path]) => Node.isNode(node) && (node as CustomElement).type === 'token')
+
+        return firstTokenAncestor
+    }
+    const startToken = getFirstTokenAncestor(start.path)
+    const endToken = getFirstTokenAncestor(end.path)
+    // console.log({ startToken, endToken })
+
+    if (startToken && endToken) {
+        const [_, startPath] = startToken
+        const startPoint: Point = {
+            path: startPath,
+            offset: 0
+        }
+
+        const [endNode, endPath] = endToken
+        const endPoint: Point = {
+            path: endPath,
+            offset: (endNode.children[0] as CustomText).text.length
+        }
+
+        console.log({ startPoint, endPoint })
+        Transforms.select(editor, {
+            anchor: startPoint,
+            focus: endPoint,
+        })
+
+    }
 }
 
 export enum LabelMode {
@@ -138,7 +180,7 @@ const EntityLabeler: React.FC<Props> = props => {
                 const containsSelectionOperations = selectionOperations.length > 0
                 if (props.labelMode === LabelMode.Label && containsSelectionOperations) {
                     // console.log('Operations: ', editor.operations)
-                    debouncedSelectionChange(editor.selection)
+                    debouncedSelectionChange(editor.selection, editor)
                 }
 
                 const customValue = value as CustomElement[]

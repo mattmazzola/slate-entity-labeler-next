@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import EntityLabeler, { CustomElement, IEntity, DebugMode, LabelMode } from './components/EntityLabeler'
+import SliderOptions from './components/SliderOptions'
 
 const defaultText = `
 OK test this
@@ -14,14 +15,6 @@ const App: React.FC = () => {
   const [entities, setEntities] = React.useState<IEntity<unknown>[]>([])
   const [value, setValue] = React.useState<CustomElement[] | undefined>()
 
-  const onToggleMode = () => {
-    setDebugMode(m => {
-      return m === DebugMode.Debug
-        ? DebugMode.Normal
-        : DebugMode.Debug
-    })
-  }
-
   const onChangeValue = (value: CustomElement[]) => {
     setValue(value)
   }
@@ -34,27 +27,36 @@ const App: React.FC = () => {
     setEntities(entities)
   }
 
+  const onChangeSelectedOption = (option: string) => {
+    setLabelMode(option as LabelMode)
+  }
+
+  const onChangeDebugSelectedOption = (option: string) => {
+    setDebugMode(option as DebugMode)
+  }
+
   return (
     <Wrapper>
       <header>
         <h1>Slate Entity Labeler</h1>
       </header>
       <main>
-        <h2>Editor</h2>
         <div>
-          Label Mode: {labelMode}
-          <div>
-            <button onClick={() => setLabelMode(LabelMode.EditText)}>Edit Text</button>
-            <button onClick={() => setLabelMode(LabelMode.Label)}>Label Entities</button>
-          </div>
+          <SliderOptions
+            options={[LabelMode.EditText, LabelMode.Label]}
+            selectedOption={labelMode}
+            onChangeSelectedOption={onChangeSelectedOption}
+          />
+
+          <SliderOptions
+            options={[DebugMode.Normal, DebugMode.Debug]}
+            selectedOption={debugMode}
+            onChangeSelectedOption={onChangeDebugSelectedOption}
+          />
         </div>
-        <div>
-          Debug Mode: {debugMode}
-          <div>
-            <button onClick={onToggleMode}>Toggle Mode</button>
-          </div>
-        </div>
+
         <section>
+          <h2>Editor</h2>
           <EntityLabeler
             text={text}
             labelMode={labelMode}

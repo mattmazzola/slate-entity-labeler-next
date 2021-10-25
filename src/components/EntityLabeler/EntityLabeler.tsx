@@ -86,7 +86,7 @@ type Props = {
     debugMode: DebugMode
     onChangeValue: (value: CustomElement[]) => void
     onChangeText: (text: string) => void
-    onChangeEntities: (entities: any[]) => void
+    onChangeEntities: (entities: IEntity<unknown>[]) => void
 }
 
 const EntityLabeler: React.FC<Props> = props => {
@@ -114,7 +114,7 @@ const EntityLabeler: React.FC<Props> = props => {
                 break
             }
         }
-    }, [props.text, props.entities.length])
+    }, [props.text])
 
     React.useEffect(() => {
         if (lastLabelModeRef.current && lastLabelModeRef.current !== props.labelMode) {

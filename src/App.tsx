@@ -31,7 +31,7 @@ const App: React.FC = () => {
   }
 
   const onChangeEntities = (entities: IEntity<unknown>[]) => {
-    console.log({ entities })
+    setEntities(entities)
   }
 
   return (
@@ -67,9 +67,20 @@ const App: React.FC = () => {
         </section>
         <DataSection>
           <div>
-            <h2>Text</h2>
-            {text}
+            <div>
+              <h2>Text</h2>
+              {text}
+            </div>
+            <div>
+              <h2>Entities:</h2>
+              <CodeContainer>
+                <pre>
+                  <code>{entities ? JSON.stringify(entities, null, 4) : "Empty"}</code>
+                </pre>
+              </CodeContainer>
+            </div>
           </div>
+
           <ValueDiv>
             <h2>Value:</h2>
             <CodeContainer>
@@ -78,14 +89,6 @@ const App: React.FC = () => {
               </pre>
             </CodeContainer>
           </ValueDiv>
-          <div>
-            <h2>Entities:</h2>
-            <CodeContainer>
-              <pre>
-                <code>{entities ? JSON.stringify(entities, null, 4) : "Empty"}</code>
-              </pre>
-            </CodeContainer>
-          </div>
         </DataSection>
       </main>
     </Wrapper>
@@ -100,16 +103,11 @@ const Wrapper = styled.div`
 
 const DataSection = styled.section`
   display: grid;
-  grid-template: 1fr 1fr / 1fr 1fr;
-  grid-template-areas:
-    "text value"
-    "entities value";
-
+  grid-template-columns: 1fr 1fr;
   gap: 2rem;
 `
 
 const ValueDiv = styled.div`
-  grid-area: value;
 `
 
 const CodeContainer = styled.div`

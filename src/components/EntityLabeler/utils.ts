@@ -39,9 +39,24 @@ export const CustomEditor = {
     },
 
     getEntities(editor: CustomEditor) {
-        const entities = [...CustomEditor.nodes(editor, {
+        // TODO: This is only getting entities within the selection. It should get ALL entities
+        const entitiesNodeEntries = [...CustomEditor.nodes(editor, {
+            at: undefined,
             match: n => (n as CustomElement).type === 'entity',
+            mode: 'all'
         })]
+
+        const entities = entitiesNodeEntries
+            .map<IEntity<unknown>>(([node, path]) => {
+                const text = Node.string(node)
+                return {
+                    data: {
+                        text
+                    },
+                    startTokenIndex: 0,
+                    tokenLength: 0
+                }
+            })
 
         return entities
     },

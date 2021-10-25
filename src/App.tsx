@@ -13,12 +13,25 @@ const App: React.FC = () => {
   const [debugMode, setDebugMode] = React.useState<DebugMode>(DebugMode.Debug)
   const [entities, setEntities] = React.useState<IEntity<unknown>[]>([])
   const [value, setValue] = React.useState<CustomElement[] | undefined>()
+
   const onToggleMode = () => {
     setDebugMode(m => {
       return m === DebugMode.Debug
         ? DebugMode.Normal
         : DebugMode.Debug
     })
+  }
+
+  const onChangeValue = (value: CustomElement[]) => {
+    setValue(value)
+  }
+
+  const onChangeText = (text: string) => {
+    setText(text)
+  }
+
+  const onChangeEntities = (entities: IEntity<unknown>[]) => {
+    console.log({ entities })
   }
 
   return (
@@ -47,17 +60,33 @@ const App: React.FC = () => {
             labelMode={labelMode}
             debugMode={debugMode}
             entities={entities}
-            onChangeValue={value => setValue(value)}
+            onChangeValue={onChangeValue}
+            onChangeText={onChangeText}
+            onChangeEntities={onChangeEntities}
           />
         </section>
-        <section>
-          <h2>Value:</h2>
-          <CodeContainer>
-            <pre>
-              <code>{value ? JSON.stringify(value, null, 4) : "Empty"}</code>
-            </pre>
-          </CodeContainer>
-        </section>
+        <DataSection>
+          <div>
+            <h2>Text</h2>
+            {text}
+          </div>
+          <ValueDiv>
+            <h2>Value:</h2>
+            <CodeContainer>
+              <pre>
+                <code>{value ? JSON.stringify(value, null, 4) : "Empty"}</code>
+              </pre>
+            </CodeContainer>
+          </ValueDiv>
+          <div>
+            <h2>Entities:</h2>
+            <CodeContainer>
+              <pre>
+                <code>{entities ? JSON.stringify(entities, null, 4) : "Empty"}</code>
+              </pre>
+            </CodeContainer>
+          </div>
+        </DataSection>
       </main>
     </Wrapper>
   )
@@ -67,6 +96,20 @@ const Wrapper = styled.div`
   padding: 2rem;
   font-size: 2rem;
   position: relative;
+`
+
+const DataSection = styled.section`
+  display: grid;
+  grid-template: 1fr 1fr / 1fr 1fr;
+  grid-template-areas:
+    "text value"
+    "entities value";
+
+  gap: 2rem;
+`
+
+const ValueDiv = styled.div`
+  grid-area: value;
 `
 
 const CodeContainer = styled.div`

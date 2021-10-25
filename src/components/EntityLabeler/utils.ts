@@ -24,18 +24,26 @@ export const CustomEditor = {
     ...Editor,
 
     isParagraph(editor: CustomEditor) {
-        const [match] = CustomEditor.nodes(editor, {
+        const [firstMatchedNode] = CustomEditor.nodes(editor, {
             match: n => (n as CustomElement).type === 'paragraph',
         })
 
-        return Boolean(match)
+        return Boolean(firstMatchedNode)
     },
     isEntity(editor: CustomEditor) {
-        const [match] = CustomEditor.nodes(editor, {
+        const [firstMatchNode] = CustomEditor.nodes(editor, {
             match: n => (n as CustomElement).type === 'entity',
         })
 
-        return Boolean(match)
+        return Boolean(firstMatchNode)
+    },
+
+    getEntities(editor: CustomEditor) {
+        const entities = [...CustomEditor.nodes(editor, {
+            match: n => (n as CustomElement).type === 'entity',
+        })]
+
+        return entities
     },
 
     toggleBlockEntity(editor: CustomEditor) {

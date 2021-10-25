@@ -3,9 +3,8 @@ import styled from 'styled-components'
 import { BaseSelection, createEditor, Editor, Node, Path, Point, Range, SelectionOperation, Transforms } from 'slate'
 import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from 'slate-react'
 
-import { convertEntitiesAndTextToTokenizedEditorValue, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels } from './utils'
+import { convertEntitiesAndTextToTokenizedEditorValue, CustomEditor, CustomText, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels } from './utils'
 import { Toolbar } from './Toolbar'
-import { CustomText } from '.'
 import { IEntity } from './models'
 
 const slatejsContentKey = 'slatejs-content-key'
@@ -86,12 +85,14 @@ type Props = {
     labelMode: LabelMode
     debugMode: DebugMode
     onChangeValue: (value: CustomElement[]) => void
-    // onChangeText: (text: string) => void
-    // onChangeEntities: (entities: IEntity<unknown>[]) => void
+    onChangeText: (text: string) => void
+    onChangeEntities: (entities: any[]) => void
 }
 
 const EntityLabeler: React.FC<Props> = props => {
     const debouncedValueChange = React.useCallback(debounce(props.onChangeValue, 300), [props.onChangeValue])
+    const debouncedTextChange = React.useCallback(debounce(props.onChangeText, 300), [props.onChangeText])
+    const debouncedEntitiesChange = React.useCallback(debounce(props.onChangeEntities, 300), [props.onChangeEntities])
     const debouncedSelectionChange = React.useCallback(debounce(selectionChange, 300), [])
     const [value, setValue] = React.useState<CustomElement[]>(defaultValue)
     const lastLabelModeRef = React.useRef<LabelMode | undefined>()
@@ -190,6 +191,11 @@ const EntityLabeler: React.FC<Props> = props => {
                 const isAstChange = editor.operations.some(op => selectionOperationType !== op.type)
                 if (isAstChange) {
                     debouncedValueChange(customValue)
+
+                    const text = serialize(customValue)
+                    debouncedTextChange(text)
+                    const entities = CustomEditor.getEntities(editor)
+                    debouncedEntitiesChange(entities)
                 }
             }}
         >

@@ -1,5 +1,6 @@
 import { Editor, BaseText, Transforms, BaseEditor, Node } from 'slate'
 import { ReactEditor } from 'slate-react'
+import { IEntity, IEntityPlaceholder, IToken, TokenOrEntity, TokenType } from './models'
 
 export type CustomElement = {
     type: 'paragraph' | 'entity' | 'token'
@@ -52,11 +53,9 @@ export const withLabels = (editor: CustomEditor) => {
     editor.isInline = (element: CustomElement) => {
         switch (element.type) {
             case 'entity': {
-                console.log('Entity: ', { element })
                 return true
             }
             case 'token': {
-                // console.log('Token: ', { element })
                 return true
             }
         }
@@ -104,18 +103,6 @@ export const debounce = <T extends (...args: any[]) => any>(fn: T, time: number)
     return debouncedFn
 }
 
-export enum TokenType {
-    Token = "token",
-    EntityPlaceholder = "entityPlaceholder"
-}
-
-export interface IToken {
-    type: TokenType.Token
-    text: string
-    isSelectable: boolean
-    startIndex: number
-}
-
 /**
  * Note: this is more like a negative match used to determine characters that split the string instead of
  * positive match would specify characters which are tokens. Only chose this because it seems like a much
@@ -141,8 +128,6 @@ export const tokenizeText = (text: string, tokenRegex: RegExp): IToken[] => {
             text: matchedText,
             isSelectable: true,
             startIndex: lastIndex,
-            // endIndex: result.index,
-            // length: matchedText.length
         }
 
         const selectableToken: IToken = {
@@ -150,8 +135,6 @@ export const tokenizeText = (text: string, tokenRegex: RegExp): IToken[] => {
             text: regexMatchResult[0],
             isSelectable: false,
             startIndex: regexMatchResult.index,
-            // endIndex: result.index + result[0].length,
-            // length: result[0].length
         }
 
         tokens.push(...[
@@ -169,19 +152,11 @@ export const tokenizeText = (text: string, tokenRegex: RegExp): IToken[] => {
         text: endText,
         isSelectable: true,
         startIndex: lastIndex,
-        // endIndex,
-        // length: endText.length
     }
 
     tokens.push(nonToken)
 
     return tokens
-}
-
-export interface IEntity<T> {
-    startTokenIndex: number
-    tokenLength: number
-    data: T
 }
 
 /**
@@ -208,17 +183,6 @@ export const convertEntitiesAndTextToTokenizedEditorValue = (
 }
 
 export const normalizeEntities = <T>(x: T): T => { return x }
-
-// This is a marker for entity before it is confirmed by the user
-// Normal entities have tokens as children, but these entities only mark the tokens with an entity
-// This mean they do not change the value or DOM structure
-interface IEntityPlaceholder {
-    type: TokenType.EntityPlaceholder
-    entity: IEntity<unknown>
-    tokens: IToken[]
-}
-
-type TokenOrEntity = IToken | IEntityPlaceholder
 
 export const labelTokens = (tokens: IToken[], customEntities: IEntity<unknown>[]): TokenOrEntity[] => {
     return wrapTokensWithEntities(tokens, customEntities)

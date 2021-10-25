@@ -3,9 +3,10 @@ import styled from 'styled-components'
 import { BaseSelection, createEditor, Editor, Node, Path, Point, Range, SelectionOperation, Transforms } from 'slate'
 import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from 'slate-react'
 
-import { convertEntitiesAndTextToTokenizedEditorValue, IEntity, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels } from './utils'
+import { convertEntitiesAndTextToTokenizedEditorValue, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels } from './utils'
 import { Toolbar } from './Toolbar'
 import { CustomText } from '.'
+import { IEntity } from './models'
 
 const slatejsContentKey = 'slatejs-content-key'
 
@@ -61,12 +62,11 @@ const selectionChange = (selection: BaseSelection, editor: Editor) => {
             offset: (endNode.children[0] as CustomText).text.length
         }
 
-        console.log({ startPoint, endPoint })
+        // console.log({ startPoint, endPoint })
         Transforms.select(editor, {
             anchor: startPoint,
             focus: endPoint,
         })
-
     }
 }
 
@@ -86,11 +86,13 @@ type Props = {
     labelMode: LabelMode
     debugMode: DebugMode
     onChangeValue: (value: CustomElement[]) => void
+    // onChangeText: (text: string) => void
+    // onChangeEntities: (entities: IEntity<unknown>[]) => void
 }
 
 const EntityLabeler: React.FC<Props> = props => {
-    const debouncedValueChange = React.useCallback(debounce(props.onChangeValue, 500), [props.onChangeValue])
-    const debouncedSelectionChange = React.useCallback(debounce(selectionChange, 500), [])
+    const debouncedValueChange = React.useCallback(debounce(props.onChangeValue, 300), [props.onChangeValue])
+    const debouncedSelectionChange = React.useCallback(debounce(selectionChange, 300), [])
     const [value, setValue] = React.useState<CustomElement[]>(defaultValue)
     const lastLabelModeRef = React.useRef<LabelMode | undefined>()
     React.useEffect(() => {
@@ -151,9 +153,9 @@ const EntityLabeler: React.FC<Props> = props => {
 
     const editOperationTypes = [
         'remove_text',
-        'remove_node',
         'insert_text',
-        'insert_node',
+        // 'remove_node',
+        // 'insert_node',
     ]
 
     const selectionOperationType = 'set_selection'
@@ -163,7 +165,6 @@ const EntityLabeler: React.FC<Props> = props => {
             editor={editor}
             value={value}
             onChange={value => {
-
                 const editOperations = editor.operations.filter(op => {
                     return editOperationTypes.find(editOpType => editOpType === op.type)
                 })
@@ -231,11 +232,12 @@ const EntityWrapper = styled.div<{ mode: DebugMode }>`
     display: inline-block;
     border-radius: 3px;
 
+    background: var(--color-entities-base);
+    margin: -1px;
+    border 1px solid var(--color-entities-base);
+
     ${props => props.mode === DebugMode.Debug
         ? `
-        background: var(--color-entities-base);
-        margin: -1x;
-        border 1px solid var(--color-entities-base);
         `
         : ''}
 `

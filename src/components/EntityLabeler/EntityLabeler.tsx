@@ -94,14 +94,15 @@ const EntityLabeler: React.FC<Props> = props => {
     const debouncedTextChange = React.useCallback(debounce(props.onChangeText, 300), [props.onChangeText])
     const debouncedEntitiesChange = React.useCallback(debounce(props.onChangeEntities, 300), [props.onChangeEntities])
     const debouncedSelectionChange = React.useCallback(debounce(selectionChange, 300), [])
+
     const [value, setValue] = React.useState<CustomElement[]>(defaultValue)
     const lastLabelModeRef = React.useRef<LabelMode | undefined>()
+
     React.useEffect(() => {
         debouncedValueChange(value)
     }, [value])
 
     React.useEffect(() => {
-        console.log(`Text or Entities changed: `, props.text)
         switch (props.labelMode) {
             case LabelMode.EditText: {
                 const newValue = deserialize(props.text)
@@ -117,8 +118,8 @@ const EntityLabeler: React.FC<Props> = props => {
     }, [props.text])
 
     React.useEffect(() => {
+        // If label mode is set and has changed
         if (lastLabelModeRef.current && lastLabelModeRef.current !== props.labelMode) {
-            console.log(`Label Mode Changed: `, props.labelMode)
             const serializedValue = serialize(value)
 
             switch (props.labelMode) {
@@ -155,6 +156,7 @@ const EntityLabeler: React.FC<Props> = props => {
     const editOperationTypes = [
         'remove_text',
         'insert_text',
+        // Need these operations to use Transforms.wrapNodes
         // 'remove_node',
         // 'insert_node',
     ]
@@ -222,16 +224,14 @@ const ToolbarWrapper = styled.div`
 `
 
 const EditorWrapper = styled.div`
-  [data-slate-editor="true"] {
     border: 1px solid var(--color-white);
     border-radius: 3px;
     padding: 0.5rem;
-  }
 
-  [data-slate-editor="true"] :is(p, pre) {
-    padding: 0;
-    margin: 0;
-  }
+    [data-slate-editor="true"] :is(p, pre) {
+        padding: 0;
+        margin: 0;
+    }
 `
 
 const EntityWrapper = styled.div<{ mode: DebugMode }>`

@@ -2,10 +2,24 @@ import { Editor, BaseText, Transforms, BaseEditor, Node } from 'slate'
 import { ReactEditor } from 'slate-react'
 import { IEntity, IEntityPlaceholder, IToken, TokenOrEntity, TokenType } from './models'
 
-export type CustomElement = {
-    type: 'paragraph' | 'entity' | 'token'
+type CustomElementBase = {
     children: (CustomText | CustomElement)[]
 }
+
+type SlateToken = CustomElementBase & {
+    type: "token"
+    tokenIndex: number
+}
+
+type SlateEntity = CustomElementBase & {
+    type: "entity"
+}
+
+type SlateParagraph = CustomElementBase & {
+    type: "paragraph"
+}
+
+export type CustomElement = SlateParagraph | SlateEntity | SlateToken
 
 export type CustomText = BaseText & {
 }
@@ -24,14 +38,14 @@ export const CustomEditor = {
     ...Editor,
 
     isParagraph(editor: CustomEditor) {
-        const [firstMatchedNode] = CustomEditor.nodes(editor, {
+        const [firstMatchedNode] = CustomEditor.nodes<CustomElement>(editor, {
             match: n => (n as CustomElement).type === 'paragraph',
         })
 
         return Boolean(firstMatchedNode)
     },
     isEntity(editor: CustomEditor) {
-        const [firstMatchNode] = CustomEditor.nodes(editor, {
+        const [firstMatchNode] = CustomEditor.nodes<CustomElement>(editor, {
             match: n => (n as CustomElement).type === 'entity',
         })
 
@@ -41,20 +55,52 @@ export const CustomEditor = {
     getEntities(editor: CustomEditor) {
         // TODO: This is only getting entities within the selection. It should get ALL entities
         const entitiesNodeEntries = [...CustomEditor.nodes(editor, {
-            at: undefined,
+            at: {
+                anchor: Editor.start(editor, []),
+                focus: Editor.end(editor, []),
+            },
             match: n => (n as CustomElement).type === 'entity',
             mode: 'all'
         })]
 
         const entities = entitiesNodeEntries
-            .map<IEntity<unknown>>(([node, path]) => {
-                const text = Node.string(node)
+            .map<IEntity<unknown>>(([entityNode, path]) => {
+                // Attempt to use Slate Node API but it was more complicated
+                // Note.elements returns root Node?
+                // const tokenNodeEntries = [...Node.elements(entityNode, {
+                //     pass: ([n, p]) => (n as CustomElement).type === 'token'
+                // })]
+
+                let startTokenIndex = -1
+                let tokenLength = 1
+                let tokens = (entityNode as CustomElement).children
+                    .filter(n => (n as CustomElement).type === 'token')
+
+                if (tokens.length > 0) {
+                    const firsToken = tokens[0]
+                    if ((firsToken as CustomElement).type === "token") {
+                        startTokenIndex = (firsToken as any).tokenIndex
+                    }
+
+                    tokenLength = tokens.length
+                }
+                // If you only select a single token, sometimes the entity will wrap the text inside the token
+                // Instead of wrapping the token
+                // In this case, we get the parent token and then reinsert it into the entity
+                else {
+                    const parent = Node.parent(editor, path)
+                    if ((parent as CustomElement).type === "token") {
+                        startTokenIndex = (parent as any).tokenIndex
+                    }
+                }
+
+                const text = Node.string(entityNode)
                 return {
                     data: {
                         text
                     },
-                    startTokenIndex: 0,
-                    tokenLength: 0
+                    startTokenIndex,
+                    tokenLength,
                 }
             })
 
@@ -141,6 +187,7 @@ export const tokenizeText = (text: string, tokenRegex: RegExp): IToken[] => {
 
     let regexMatchResult: RegExpExecArray | null = null
     let lastIndex = tokenRegex.lastIndex
+    let tokenIndex = 0
     // tslint:disable-next-line:no-conditional-assignment
     while ((regexMatchResult = tokenRegex.exec(text)) !== null) {
         // The match is the token separator which is not selectable
@@ -150,15 +197,22 @@ export const tokenizeText = (text: string, tokenRegex: RegExp): IToken[] => {
             type: TokenType.Token,
             text: matchedText,
             isSelectable: true,
-            startIndex: lastIndex,
+            startCharIndex: lastIndex,
+            tokenIndex,
         }
+
+        tokenIndex += 1
 
         const selectableToken: IToken = {
             type: TokenType.Token,
             text: regexMatchResult[0],
             isSelectable: false,
-            startIndex: regexMatchResult.index,
+            startCharIndex: regexMatchResult.index,
+            tokenIndex,
         }
+
+        // TODO: Determine if non-selectable tokens increment the token count
+        tokenIndex += 1
 
         tokens.push(...[
             nonSelectableToken,
@@ -170,14 +224,17 @@ export const tokenizeText = (text: string, tokenRegex: RegExp): IToken[] => {
 
     const endIndex = text.length
     const endText = text.substring(lastIndex, endIndex)
-    const nonToken: IToken = {
-        type: TokenType.Token,
-        text: endText,
-        isSelectable: true,
-        startIndex: lastIndex,
-    }
+    if (endText.length > 0) {
+        const endToken: IToken = {
+            type: TokenType.Token,
+            text: endText,
+            isSelectable: true,
+            startCharIndex: lastIndex,
+            tokenIndex,
+        }
 
-    tokens.push(nonToken)
+        tokens.push(endToken)
+    }
 
     return tokens
 }
@@ -195,6 +252,8 @@ export const convertEntitiesAndTextToTokenizedEditorValue = (
 ) => {
     const normalizedEntities = normalizeEntities(customEntities)
     const lines = text.split('\n')
+    // TODO: Need accumulative token indicies
+    // Currently resets at each line
     const tokenizedLlines = lines
         .map(line => {
             const tokenizedLine = tokenizeText(line, tokenizeRegex)
@@ -310,6 +369,7 @@ export const convertToSlateValue = (tokensWithEntities: TokenOrEntity[][]): Cust
                     .map<CustomElement>(token => {
                         return {
                             type: "token",
+                            tokenIndex: token.tokenIndex,
                             children: [
                                 {
                                     text: token.text
@@ -329,6 +389,7 @@ export const convertToSlateValue = (tokensWithEntities: TokenOrEntity[][]): Cust
                 if (tokenOrEntity.isSelectable) {
                     const tokenElement: CustomElement = {
                         type: "token",
+                        tokenIndex: tokenOrEntity.tokenIndex,
                         children: [
                             {
                                 text: tokenOrEntity.text

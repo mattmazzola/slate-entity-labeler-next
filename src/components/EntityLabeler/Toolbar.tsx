@@ -36,7 +36,7 @@ export const Toolbar: React.FC<Props> = props => {
             </Button>
             <Button
                 onClick={() => {
-                    CustomEditor.toggleBlockEntity(editor)
+                    CustomEditor.toggleBlockEntity(editor, 'entity-id-1', 'entity-name-1')
                 }}
             >
                 Create Block Entity

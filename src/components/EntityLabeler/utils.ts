@@ -1,5 +1,6 @@
 import { Editor, BaseText, Transforms, BaseEditor, Node } from 'slate'
 import { ReactEditor } from 'slate-react'
+import { EntityData } from '.'
 import { IEntity, IEntityPlaceholder, IToken, TokenOrEntity, TokenType } from './models'
 
 type CustomElementBase = {
@@ -13,6 +14,8 @@ type SlateToken = CustomElementBase & {
 
 type SlateEntity = CustomElementBase & {
     type: "entity"
+    entityId: string
+    entityName: string
 }
 
 type SlateParagraph = CustomElementBase & {
@@ -64,28 +67,29 @@ export const CustomEditor = {
         })]
 
         const entities = entitiesNodeEntries
-            .map<IEntity<unknown>>(([entityNode, path]) => {
+            .map<IEntity<EntityData>>(([node, path]) => {
                 // Attempt to use Slate Node API but it was more complicated
                 // Note.elements returns root Node?
                 // const tokenNodeEntries = [...Node.elements(entityNode, {
                 //     pass: ([n, p]) => (n as CustomElement).type === 'token'
                 // })]
 
+                const entityNode = node as SlateEntity
+
                 let startTokenIndex = -1
                 let tokenLength = 1
-                let tokens = (entityNode as CustomElement).children
+                let tokensElements = entityNode.children
                     .filter(n => (n as CustomElement).type === 'token')
 
+                const tokens = tokensElements as SlateToken[]
                 if (tokens.length > 0) {
                     const firsToken = tokens[0]
-                    if ((firsToken as CustomElement).type === "token") {
-                        startTokenIndex = (firsToken as any).tokenIndex
-                    }
-
+                    startTokenIndex = firsToken.tokenIndex
                     tokenLength = tokens.length
                 }
-                // If you only select a single token, sometimes the entity will wrap the text inside the token
-                // Instead of wrapping the token
+
+                // If you only select a single token, Transforms.wrapNodes will wrap the text
+                // inside the token nstead of wrapping the token
                 // In this case, we get the parent token and then reinsert it into the entity
                 else {
                     const parent = Node.parent(editor, path)
@@ -95,22 +99,30 @@ export const CustomEditor = {
                 }
 
                 const text = Node.string(entityNode)
-                return {
+                const entity: IEntity<EntityData> = {
                     data: {
+                        name: entityNode.entityName,
                         text
                     },
+                    id: entityNode.entityId,
                     startTokenIndex,
                     tokenLength,
                 }
+
+                return entity
             })
 
         return entities
     },
 
-    toggleBlockEntity(editor: CustomEditor) {
+    toggleBlockEntity(
+        editor: CustomEditor,
+        entityId: string,
+        entityName: string
+    ) {
         Transforms.wrapNodes(
             editor,
-            { type: 'entity' } as CustomElement,
+            { type: 'entity', entityId, entityName } as CustomElement,
             { split: true }
         )
     }
@@ -252,7 +264,7 @@ export const tokenizeText = (
  */
 export const convertEntitiesAndTextToTokenizedEditorValue = (
     text: string,
-    customEntities: IEntity<unknown>[]
+    customEntities: IEntity<EntityData>[]
 ) => {
     const normalizedEntities = normalizeEntities(customEntities)
     const lines = text.split('\n')
@@ -279,7 +291,7 @@ export const convertEntitiesAndTextToTokenizedEditorValue = (
 
 export const normalizeEntities = <T>(x: T): T => { return x }
 
-export const labelTokens = (tokens: IToken[], customEntities: IEntity<unknown>[]): TokenOrEntity[] => {
+export const labelTokens = <T>(tokens: IToken[], customEntities: IEntity<T>[]): TokenOrEntity<T>[] => {
     return wrapTokensWithEntities(tokens, customEntities)
 }
 
@@ -311,13 +323,13 @@ export const findLastIndex = <T>(xs: T[], f: (x: T) => boolean): number => {
  * @param tokens Array of Tokens
  * @param entities Array of Custom Entities with Token Indicies
  */
-export const wrapTokensWithEntities = (tokens: IToken[], entities: IEntity<unknown>[]): TokenOrEntity[] => {
+export const wrapTokensWithEntities = <T>(tokens: IToken[], entities: IEntity<T>[]): TokenOrEntity<T>[] => {
     // If there are no entities than no work to do, return tokens
     if (entities.length === 0) {
         return tokens
     }
 
-    const tokenArray: TokenOrEntity[] = []
+    const tokenArray: TokenOrEntity<T>[] = []
     const sortedEntities = [...entities].sort((a, b) => a.startTokenIndex - b.startTokenIndex)
 
     // Include all non labeled tokens before first entity
@@ -329,7 +341,7 @@ export const wrapTokensWithEntities = (tokens: IToken[], entities: IEntity<unkno
     for (const [i, cet] of Array.from(sortedEntities.entries())) {
         // push labeled tokens
         const endTokenIndex = cet.startTokenIndex + cet.tokenLength
-        const entity: IEntityPlaceholder = {
+        const entity: IEntityPlaceholder<T> = {
             type: TokenType.EntityPlaceholder,
             entity: cet,
             tokens: tokens.slice(cet.startTokenIndex, endTokenIndex)
@@ -364,7 +376,7 @@ export const defaultValue: CustomElement[] = [
     }
 ]
 
-export const convertToSlateValue = (tokensWithEntities: TokenOrEntity[][]): CustomElement[] => {
+export const convertToSlateValue = (tokensWithEntities: TokenOrEntity<EntityData>[][]): CustomElement[] => {
     // If there are no tokens, just return empty text node to ensure valid SlateValue object
     // In other words non-void parent nodes must have a child.
     if (tokensWithEntities.length === 0) {
@@ -393,6 +405,8 @@ export const convertToSlateValue = (tokensWithEntities: TokenOrEntity[][]): Cust
 
                 const entityElemnt: CustomElement = {
                     type: "entity",
+                    entityId: tokenOrEntity.entity.id,
+                    entityName: tokenOrEntity.entity.data.name,
                     children: tokenElements
                 }
 
@@ -465,4 +479,21 @@ export const warnAboutOverlappingEntities = (customEntities: IEntity<object>[]):
                 return overlap
             })
     })
+}
+
+const slatejsContentKey = 'slatejs-content-key'
+
+const getSavedValueOrDefault = () => {
+    const storedContent = localStorage.getItem(slatejsContentKey)
+    const value: CustomElement[] = storedContent
+        ? JSON.parse(storedContent)
+        : defaultValue
+
+    return value
+}
+
+const saveValue = (value: CustomElement[]) => {
+    // Save the value to Local Storage.
+    const content = JSON.stringify(value)
+    localStorage.setItem(slatejsContentKey, content)
 }

@@ -1,18 +1,21 @@
 import React from 'react'
 import styled from 'styled-components'
-import EntityLabeler, { CustomElement, IEntity, DebugMode, LabelMode } from './components/EntityLabeler'
+import EntityLabeler, { CustomElement, IEntity, DebugMode, LabelMode, EntityData } from './components/EntityLabeler'
 import SliderOptions from './components/SliderOptions'
 
 const defaultText = `
 OK test this
 Fourth word second word
+Third line, let's test this
 `.trim()
+
+
 
 const App: React.FC = () => {
   const [text, setText] = React.useState<string>(defaultText)
   const [labelMode, setLabelMode] = React.useState<LabelMode>(LabelMode.EditText)
   const [debugMode, setDebugMode] = React.useState<DebugMode>(DebugMode.Debug)
-  const [entities, setEntities] = React.useState<IEntity<unknown>[]>([])
+  const [entities, setEntities] = React.useState<IEntity<EntityData>[]>([])
   const [value, setValue] = React.useState<CustomElement[] | undefined>()
 
   const onChangeValue = (value: CustomElement[]) => {
@@ -23,7 +26,7 @@ const App: React.FC = () => {
     setText(text)
   }
 
-  const onChangeEntities = (entities: IEntity<unknown>[]) => {
+  const onChangeEntities = (entities: IEntity<EntityData>[]) => {
     setEntities(entities)
   }
 

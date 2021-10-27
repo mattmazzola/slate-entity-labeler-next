@@ -4,26 +4,11 @@ import { BaseSelection, createEditor, Editor, Node, Path, Point, Range, Selectio
 import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from 'slate-react'
 
 import { convertEntitiesAndTextToTokenizedEditorValue, CustomEditor, CustomText, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels } from './utils'
-import { Toolbar } from './Toolbar'
-import { IEntity } from './models'
-
-const slatejsContentKey = 'slatejs-content-key'
-
-const getSavedValueOrDefault = () => {
-    const storedContent = localStorage.getItem(slatejsContentKey)
-    const value: CustomElement[] = storedContent
-        ? JSON.parse(storedContent)
-        : defaultValue
-
-    return value
-}
-
-const saveValue = (value: CustomElement[]) => {
-    // Save the value to Local Storage.
-    const content = JSON.stringify(value)
-    localStorage.setItem(slatejsContentKey, content)
-    localStorage.setItem('serializedContent', serialize(value as CustomElement[]))
-}
+import { DebugMode, IEntity, LabelMode } from './models'
+import { EntityPicker } from './EntityPicker'
+import { TokenElement } from './TokenElement'
+import { EntityElement } from './EntityElement'
+import { EntityData } from '.'
 
 const selectionChange = (selection: BaseSelection, editor: Editor) => {
     if (!selection) {
@@ -69,24 +54,24 @@ const selectionChange = (selection: BaseSelection, editor: Editor) => {
     }
 }
 
-export enum LabelMode {
-    EditText = 'EditText',
-    Label = 'Label'
-}
+const editOperationTypes = [
+    'remove_text',
+    'insert_text',
+    // Need these operations to use Transforms.wrapNodes
+    // 'remove_node',
+    // 'insert_node',
+]
 
-export enum DebugMode {
-    Normal = 'Normal',
-    Debug = 'Debug'
-}
+const selectionOperationType = 'set_selection'
 
 type Props = {
     text: string,
-    entities: IEntity<unknown>[]
+    entities: IEntity<EntityData>[]
     labelMode: LabelMode
     debugMode: DebugMode
     onChangeValue: (value: CustomElement[]) => void
     onChangeText: (text: string) => void
-    onChangeEntities: (entities: IEntity<unknown>[]) => void
+    onChangeEntities: (entities: IEntity<EntityData>[]) => void
 }
 
 const EntityLabeler: React.FC<Props> = props => {
@@ -141,28 +126,6 @@ const EntityLabeler: React.FC<Props> = props => {
 
     const editor = React.useMemo(() => withLabels(withReact(createEditor())), [])
 
-    const onSaveValue = () => {
-        if (typeof value === 'object') {
-            saveValue(value)
-        }
-    }
-
-    const onLoadValue = () => {
-        const value = getSavedValueOrDefault()
-
-        setValue(value)
-    }
-
-    const editOperationTypes = [
-        'remove_text',
-        'insert_text',
-        // Need these operations to use Transforms.wrapNodes
-        // 'remove_node',
-        // 'insert_node',
-    ]
-
-    const selectionOperationType = 'set_selection'
-
     return (
         <Slate
             editor={editor}
@@ -201,95 +164,30 @@ const EntityLabeler: React.FC<Props> = props => {
                 }
             }}
         >
-            <ToolbarWrapper>
-                <Toolbar
-                    onClear={() => setValue(defaultValue)}
-                    onSave={onSaveValue}
-                    onLoad={onLoadValue}
+            <EditorWrapper>
+                <Editable
+                    renderElement={renderElementProps => renderElement(props.debugMode, renderElementProps)}
                 />
-                <EditorWrapper>
-                    <Editable
-                        renderElement={renderElementProps => renderElement(props.debugMode, renderElementProps)}
-                    />
-                </EditorWrapper>
-            </ToolbarWrapper>
+                <EntityPicker
+                    options={['one', 'two', 'three']}
+                    onClickCreate={(entityId, entityName) => CustomEditor.toggleBlockEntity(editor, entityId, entityName)}
+                />
+            </EditorWrapper>
         </Slate>
     )
 }
-
-const ToolbarWrapper = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-`
 
 const EditorWrapper = styled.div`
     border: 1px solid var(--color-white);
     border-radius: 3px;
     padding: 0.5rem;
+    position: relative;
 
     [data-slate-editor="true"] :is(p, pre) {
         padding: 0;
         margin: 0;
     }
 `
-
-const EntityWrapper = styled.div<{ mode: DebugMode }>`
-    display: inline-block;
-    border-radius: 3px;
-
-    background: var(--color-entities-base);
-    margin: -1px;
-    border 1px solid var(--color-entities-base);
-
-    ${props => props.mode === DebugMode.Debug
-        ? `
-        `
-        : ''}
-`
-
-type ElementProps = RenderElementProps & {
-    mode: DebugMode
-}
-
-const EntityElement: React.FC<ElementProps> = props => {
-    return (
-        <EntityWrapper
-            {...props.attributes}
-            data-is-entity={true}
-            mode={props.mode}
-        >
-            {props.children}
-        </EntityWrapper>
-    )
-}
-
-const TokenWrapper = styled.div<{ mode: DebugMode }>`
-    display: inline-block;
-    border-radius: 3px;
-
-    ${props => props.mode === DebugMode.Debug
-        ? `
-        background: var(--color-token-base);
-        margin: -1px;
-        border 1px solid var(--color-token-base);
-        `
-        : ''
-    }
-`
-
-const TokenElement: React.FC<ElementProps> = props => {
-    return (
-        <TokenWrapper
-            {...props.attributes}
-            data-is-token={true}
-            mode={props.mode}
-        >
-            {props.children}
-        </TokenWrapper>
-    )
-}
-
 
 const renderElement = (mode: DebugMode, props: RenderElementProps) => {
     switch (props.element.type) {

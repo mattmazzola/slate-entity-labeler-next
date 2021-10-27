@@ -179,15 +179,19 @@ export const debounce = <T extends (...args: any[]) => any>(fn: T, time: number)
  */
 export const tokenizeRegex = /[\s.?,!]+/g
 
-export const tokenizeText = (text: string, tokenRegex: RegExp): IToken[] => {
+export const tokenizeText = (
+    text: string,
+    tokenRegex: RegExp,
+    tokenIndex = 0
+): [IToken[], number] => {
     const tokens: IToken[] = []
     if (text.length === 0) {
-        return tokens
+        return [tokens, tokenIndex]
     }
 
     let regexMatchResult: RegExpExecArray | null = null
     let lastIndex = tokenRegex.lastIndex
-    let tokenIndex = 0
+
     // tslint:disable-next-line:no-conditional-assignment
     while ((regexMatchResult = tokenRegex.exec(text)) !== null) {
         // The match is the token separator which is not selectable
@@ -236,7 +240,7 @@ export const tokenizeText = (text: string, tokenRegex: RegExp): IToken[] => {
         tokens.push(endToken)
     }
 
-    return tokens
+    return [tokens, tokenIndex]
 }
 
 /**
@@ -252,16 +256,25 @@ export const convertEntitiesAndTextToTokenizedEditorValue = (
 ) => {
     const normalizedEntities = normalizeEntities(customEntities)
     const lines = text.split('\n')
+
     // TODO: Need accumulative token indicies
     // Currently resets at each line
+    // Alternative is to treat as a single line
+    let lastTokenIndex = 0
     const tokenizedLlines = lines
         .map(line => {
-            const tokenizedLine = tokenizeText(line, tokenizeRegex)
+            let tokenizedLine: IToken[]
+            [tokenizedLine, lastTokenIndex] = tokenizeText(line, tokenizeRegex, lastTokenIndex)
             const labeledTokens = labelTokens(tokenizedLine, normalizedEntities)
             return labeledTokens
         })
 
     return convertToSlateValue(tokenizedLlines)
+
+    // const tokenizedLines = tokenizeText(text, tokenizeRegex)
+    // const labeledTokenizedTokens = labelTokens(tokenizedLines, normalizedEntities)
+
+    // return convertToSlateValue([labeledTokenizedTokens])
 }
 
 export const normalizeEntities = <T>(x: T): T => { return x }

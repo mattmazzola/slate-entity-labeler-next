@@ -12,7 +12,6 @@ export const SliderOptions: React.FC<Props> = (props) => {
 
     return (
         <Wrapper>
-
             {props.options.map(option => {
                 return (
                     <Option onClick={() => props.onChangeSelectedOption(option)}>{option}</Option>

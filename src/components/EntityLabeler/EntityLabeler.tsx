@@ -11,7 +11,7 @@ import { EntityElement } from './EntityElement'
 import { EntityData } from '.'
 
 const selectionChange = (selection: BaseSelection, editor: Editor) => {
-    if (!selection) {
+    if (!selection || Range.isCollapsed(selection)) {
         return
     }
 
@@ -131,19 +131,20 @@ const EntityLabeler: React.FC<Props> = props => {
             editor={editor}
             value={value}
             onChange={value => {
-                const editOperations = editor.operations.filter(op => {
+                const appliedEditOperations = editor.operations.filter(op => {
                     return editOperationTypes.find(editOpType => editOpType === op.type)
                 })
 
-                const containsEditOperation = editOperations.length > 0
+                const containsEditOperation = appliedEditOperations.length > 0
                 // If in label mode and contains edit operations, terminate early to prevent text modifications
                 // Note: Still allow operations to Label Entities / WrapNodes
                 if (props.labelMode === LabelMode.Label && containsEditOperation) {
-                    console.warn(`Edit operations blocked: `, editOperations.map(o => o.type))
+                    console.warn(`Edit operations blocked: `, appliedEditOperations.map(o => o.type))
                     return
                 }
 
-                const selectionOperations: SelectionOperation[] = editor.operations.filter(op => selectionOperationType === op.type) as any[]
+                const selectionOperations: SelectionOperation[] = editor.operations
+                    .filter(op => selectionOperationType === op.type) as any[]
                 const containsSelectionOperations = selectionOperations.length > 0
                 if (props.labelMode === LabelMode.Label && containsSelectionOperations) {
                     // console.log('Operations: ', editor.operations)
@@ -166,7 +167,7 @@ const EntityLabeler: React.FC<Props> = props => {
         >
             <EditorWrapper>
                 <Editable
-                    renderElement={renderElementProps => renderElement(props.debugMode, renderElementProps)}
+                    renderElement={renderElementProps => renderElement(renderElementProps, props.debugMode)}
                 />
                 <EntityPicker
                     options={['one', 'two', 'three']}
@@ -189,7 +190,7 @@ const EditorWrapper = styled.div`
     }
 `
 
-const renderElement = (mode: DebugMode, props: RenderElementProps) => {
+const renderElement = (props: RenderElementProps, mode: DebugMode) => {
     switch (props.element.type) {
         case 'entity':
             return <EntityElement {...props} mode={mode} />

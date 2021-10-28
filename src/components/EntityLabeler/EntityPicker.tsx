@@ -4,7 +4,6 @@ import styled from 'styled-components'
 type Position = {
     top: number
     left: number
-    bottom: number
 }
 
 export type PickerProps = {
@@ -33,13 +32,13 @@ export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forw
                 Entity
             </div>
             <button onClick={() => props.onClickCreate(entityId, entityName)}>Create Entity</button>
-            <div>
+            <OptionsList>
                 {props.options.map((option, i) => {
                     return (
                         <div key={i}>{option}</div>
                     )
                 })}
-            </div>
+            </OptionsList>
         </Wrapper>
     )
 })
@@ -55,6 +54,8 @@ const Wrapper = styled.div<PickerProps>`
     border-radius: 4px;
     box-shadow: 0 1px 10px rgba(0, 0, 0, 0.3);
     min-width: 200px;
+    max-width: 300px;
+    max-height: 200px;
     padding: 0.25em;
     transition: opacity .75s;
     z-index: 1;
@@ -82,4 +83,8 @@ const Wrapper = styled.div<PickerProps>`
             top: ${props.position.top}px;
         `
         : ``}
+`
+
+const OptionsList = styled.div`
+    overflow: auto;
 `

@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { createEditor, Editor, Node, Path, Point, Range, SelectionOperation, Transforms } from 'slate'
+import { Ancestor, createEditor, Editor, Node, NodeEntry, Path, Point, Range, SelectionOperation, Transforms } from 'slate'
 import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from 'slate-react'
 
 import { convertEntitiesAndTextToTokenizedEditorValue, CustomEditor, CustomText, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels } from './utils'
@@ -114,71 +114,32 @@ const EntityLabeler: React.FC<Props> = props => {
         const start = Range.start(editor.selection)
         const end = Range.end(editor.selection)
 
-        const startTokenEntry = getFirstTokenAncestor(editor, start.path)
-        const endTokenEntry = getFirstTokenAncestor(editor, end.path)
+        let startTokenEntry = getFirstTokenAncestor(editor, start.path)
+        let endTokenEntry = getFirstTokenAncestor(editor, end.path)
+
+        // If either entry is undefined, set to other value
+        startTokenEntry = startTokenEntry ?? endTokenEntry
+        endTokenEntry = endTokenEntry ?? startTokenEntry
 
         // If we found a start and end token from selection search, expand selection to those token boundaries
         if (startTokenEntry && endTokenEntry) {
-            const [_, startTokenPath] = startTokenEntry
-            // Get point at start of start token
-            const startPoint: Point = {
-                path: startTokenPath,
-                offset: 0
-            }
+            expandSelection(startTokenEntry, endTokenEntry, editor)
 
-            // Get point at end of end token
-            const [endToken, endTokenPath] = endTokenEntry
-            const endPoint: Point = {
-                path: endTokenPath,
-                // There is assumption here that token contains single text element. (This could be made more robust)
-                offset: (endToken.children[0] as CustomText).text.length
-            }
+            // Get picker props
+            if (editorWrapperRef.current && entityPickerRef.current) {
+                const domSelection = globalThis.getSelection()
+                if (domSelection) {
+                    const pickerProps = getPickerProps(
+                        editorWrapperRef.current,
+                        entityPickerRef.current,
+                        domSelection
+                    )
 
-            const selectionLocation = {
-                anchor: startPoint,
-                focus: endPoint,
-            }
-
-            Transforms.select(editor, selectionLocation)
-        }
-
-        if (editorWrapperRef.current && entityPickerRef.current) {
-            const parentElement = editorWrapperRef.current
-            const domSelection = globalThis.getSelection()
-            if (domSelection) {
-                const parentElementRect = parentElement.getBoundingClientRect()
-                const domSelectionRange = domSelection.getRangeAt(0)
-                const domSelectionRect = domSelectionRange.getBoundingClientRect()
-
-                // Goal is to get relative coordinate offsets based on comparing absolute values
-                // Get relative left
-                const relativePickerLeft = domSelectionRect.left - parentElementRect.left
-                const halfSelectionWidth = domSelectionRect.width / 2
-                const halfPickerWidth = entityPickerRef.current.offsetWidth / 2
-                const left = relativePickerLeft - halfPickerWidth + halfSelectionWidth + window.scrollX
-                const constrainedLeft = Math.max(0, left)
-
-                // Get relative top
-                const pickerSpacer = 10
-                const relativePickerTop = domSelectionRect.top - parentElementRect.top
-                const top = (relativePickerTop + domSelectionRect.height) + pickerSpacer + window.scrollY
-
-                // Get relative bottom (unused)?
-                const relativePickerBottom = domSelectionRect.top - parentElementRect.top
-                const bottom = parentElementRect.height - relativePickerBottom + pickerSpacer
-
-                const pickerProps: PickerProps = {
-                    isVisible: true,
-                    position: {
-                        top,
-                        left: constrainedLeft,
-                        bottom
-                    }
+                    setPickerProps(pickerProps)
                 }
-
-                setPickerProps(pickerProps)
             }
         }
+
     }, 300), [])
 
     const [value, setValue] = React.useState<CustomElement[]>(defaultValue)
@@ -186,7 +147,7 @@ const EntityLabeler: React.FC<Props> = props => {
 
     React.useEffect(() => {
         debouncedValueChange(value)
-    }, [value])
+    }, [value, debouncedValueChange])
 
     React.useEffect(() => {
         switch (props.labelMode) {
@@ -210,8 +171,13 @@ const EntityLabeler: React.FC<Props> = props => {
 
             switch (props.labelMode) {
                 case LabelMode.EditText: {
+                    // Get text from value by serializing and deserializing
                     const newValue = deserialize(serializedValue)
                     setValue(newValue)
+                    // Reset picker
+                    setPickerProps({
+                        isVisible: false
+                    })
                     break
                 }
                 case LabelMode.Label: {
@@ -261,8 +227,11 @@ const EntityLabeler: React.FC<Props> = props => {
 
                     const text = serialize(customValue)
                     debouncedTextChange(text)
-                    const entities = CustomEditor.getEntities(editor)
-                    debouncedEntitiesChange(entities)
+
+                    if (props.labelMode === LabelMode.Label) {
+                        const entities = CustomEditor.getEntities(editor)
+                        debouncedEntitiesChange(entities)
+                    }
                 }
             }}
         >
@@ -276,7 +245,7 @@ const EntityLabeler: React.FC<Props> = props => {
                     ref={entityPickerRef}
                     isVisible={pickerProps.isVisible}
                     position={pickerProps.position}
-                    options={['one', 'two', 'three']}
+                    options={['one', 'two', 'three', 'three', 'three', 'three', 'three']}
                     onClickCreate={(entityId, entityName) => CustomEditor.toggleBlockEntity(editor, entityId, entityName)}
                 />
             </EditorWrapper>
@@ -308,3 +277,65 @@ const renderElement = (props: RenderElementProps, mode: DebugMode) => {
 }
 
 export default EntityLabeler
+
+function getPickerProps(
+    parentElement: HTMLDivElement,
+    pickerElement: HTMLDivElement,
+    domSelection: Selection,
+) {
+    const parentElementRect = parentElement.getBoundingClientRect()
+    const domSelectionRange = domSelection.getRangeAt(0)
+    const domSelectionRect = domSelectionRange.getBoundingClientRect()
+
+    // Goal is to get relative coordinate offsets based on comparing absolute values
+    // Get relative left
+    const relativeSelectionLeft = domSelectionRect.left - parentElementRect.left
+    const halfSelectionWidth = domSelectionRect.width / 2
+    const centerOfSelectionLeft = relativeSelectionLeft + halfSelectionWidth
+    const halfPickerWidth = pickerElement.offsetWidth / 2
+    const relativePickerLeft = centerOfSelectionLeft - halfPickerWidth
+    const constrainedLeft = Math.max(0, relativePickerLeft)
+
+    // Get relative top
+    const pickerSpacer = 10
+    const relativeSelectionTop = domSelectionRect.top - parentElementRect.top
+    const top = relativeSelectionTop + domSelectionRect.height + pickerSpacer
+
+    const pickerProps: PickerProps = {
+        isVisible: true,
+        position: {
+            top,
+            left: constrainedLeft
+        }
+    }
+    return pickerProps
+}
+
+function expandSelection(
+    startTokenEntry: NodeEntry<Ancestor>,
+    endTokenEntry: NodeEntry<Ancestor>,
+    editor: CustomEditor
+) {
+    const [_, startTokenPath] = startTokenEntry
+    // Get point at start of start token
+    const startPoint: Point = {
+        path: startTokenPath,
+        offset: 0
+    }
+
+    // Get point at end of end token
+    const [endToken, endTokenPath] = endTokenEntry
+    const endPoint: Point = {
+        path: endTokenPath,
+        // There is assumption here that token contains single text element. (This could be made more robust)
+        offset: (endToken.children[0] as CustomText).text.length
+    }
+
+    const selectionLocation = {
+        anchor: startPoint,
+        focus: endPoint,
+    }
+
+    Transforms.select(editor, selectionLocation)
+}
+

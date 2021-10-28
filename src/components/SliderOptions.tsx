@@ -12,9 +12,9 @@ export const SliderOptions: React.FC<Props> = (props) => {
 
     return (
         <Wrapper>
-            {props.options.map(option => {
+            {props.options.map((option, i) => {
                 return (
-                    <Option onClick={() => props.onChangeSelectedOption(option)}>{option}</Option>
+                    <Option key={i} onClick={() => props.onChangeSelectedOption(option)}>{option}</Option>
                 )
             })}
             <Highlight position={optionsIndex} />

@@ -1,0 +1,47 @@
+{
+    "id": null,
+    "text": "let's order",
+    "alteredText": "Let's order",
+    "tokenizedText": [
+        "let",
+        "'",
+        "s",
+        "order"
+    ],
+    "intentPredictions": [
+        {
+            "id": "84e4a838-4d44-488f-a64a-db1e7a3ee8ed",
+            "name": "None",
+            "score": 0.3671597
+        },
+        {
+            "id": "72829d25-719f-4abf-93d3-1bf7a8c2dc2a",
+            "name": "marine-health",
+            "score": 0.048460737
+        },
+        {
+            "id": "ae1841c3-3382-4702-aaf5-7953a11a4f21",
+            "name": "order pizza",
+            "score": 0.017769268
+        }
+    ],
+    "entityPredictions": [],
+    "tokenMetadata": [
+        {
+            "hasSpace": true
+        },
+        {
+            "hasSpace": true
+        },
+        {
+            "hasSpace": true
+        },
+        {
+            "hasSpace": false
+        }
+    ],
+    "patternPredictions": [],
+    "sentimentAnalysis": null,
+    "connectedServiceResult": null,
+    "multiIntentPredictions": []
+}

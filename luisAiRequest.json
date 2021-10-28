@@ -1,0 +1,173 @@
+{
+    "request": {
+        "url": "//luis/webApi/v2.0/apps/3186cae4-f048-49dc-a03c-794841cc5c0d/versions/0.1/predict?example=i+would+like+to+order+a+large+pizza+with+extra+cheese%2C+bacon%2C+lettuce%2C+and+also+add+red+peppers&patternDetails=true&multiple-intents=true"
+    },
+    "response": {
+        "body": {
+            "id": null,
+            "text": "i would like to order a large pizza with extra cheese, bacon, lettuce, and also add red peppers",
+            "alteredText": "i would like to order a large pizza with extra cheese, bacon, lettuce, and also add red peppers",
+            "tokenizedText": [
+                "i",
+                "would",
+                "like",
+                "to",
+                "order",
+                "a",
+                "large",
+                "pizza",
+                "with",
+                "extra",
+                "cheese",
+                ",",
+                "bacon",
+                ",",
+                "lettuce",
+                ",",
+                "and",
+                "also",
+                "add",
+                "red",
+                "peppers"
+            ],
+            "intentPredictions": [
+                {
+                    "id": "ae1841c3-3382-4702-aaf5-7953a11a4f21",
+                    "name": "order pizza",
+                    "score": 0.9381774
+                },
+                {
+                    "id": "84e4a838-4d44-488f-a64a-db1e7a3ee8ed",
+                    "name": "None",
+                    "score": 0.033872593
+                },
+                {
+                    "id": "72829d25-719f-4abf-93d3-1bf7a8c2dc2a",
+                    "name": "marine-health",
+                    "score": 0.031166509
+                }
+            ],
+            "entityPredictions": [
+                {
+                    "id": "d0628dcf-cc8c-4f56-a611-cb44eef07f55",
+                    "entityName": "pizza",
+                    "startTokenIndex": 4,
+                    "endTokenIndex": 20,
+                    "phrase": "order a large pizza with extra cheese , bacon , lettuce , and also add red peppers",
+                    "entityType": 1,
+                    "role": "",
+                    "roleId": ""
+                },
+                {
+                    "id": "79c77e30-5f35-4963-8073-b506df4ea911",
+                    "entityName": "size",
+                    "startTokenIndex": 6,
+                    "endTokenIndex": 6,
+                    "phrase": "large",
+                    "entityType": 1,
+                    "role": "",
+                    "roleId": ""
+                },
+                {
+                    "id": "d8054af4-e636-42f4-8df8-edf95eec7d90",
+                    "entityName": "toppings",
+                    "startTokenIndex": 9,
+                    "endTokenIndex": 10,
+                    "phrase": "extra cheese",
+                    "entityType": 1,
+                    "role": "",
+                    "roleId": ""
+                },
+                {
+                    "id": "d8054af4-e636-42f4-8df8-edf95eec7d90",
+                    "entityName": "toppings",
+                    "startTokenIndex": 14,
+                    "endTokenIndex": 14,
+                    "phrase": "lettuce",
+                    "entityType": 1,
+                    "role": "",
+                    "roleId": ""
+                },
+                {
+                    "id": "d8054af4-e636-42f4-8df8-edf95eec7d90",
+                    "entityName": "toppings",
+                    "startTokenIndex": 19,
+                    "endTokenIndex": 20,
+                    "phrase": "red peppers",
+                    "entityType": 1,
+                    "role": "",
+                    "roleId": ""
+                }
+            ],
+            "tokenMetadata": [
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": true
+                },
+                {
+                    "hasSpace": false
+                }
+            ],
+            "patternPredictions": [],
+            "sentimentAnalysis": null,
+            "connectedServiceResult": null,
+            "multiIntentPredictions": []
+        }
+    }
+}

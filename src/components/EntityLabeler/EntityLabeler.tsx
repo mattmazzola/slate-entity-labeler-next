@@ -10,47 +10,47 @@ import { TokenElement } from './TokenElement'
 import { EntityElement } from './EntityElement'
 import { EntityData } from '.'
 
-const selectionChange = (selection: BaseSelection, editor: Editor) => {
-    if (!selection || Range.isCollapsed(selection)) {
+const getFirstTokenAncestor = (rootNode: Node, path: Path) => {
+    const firstTokenAncestor = [...Node.ancestors(rootNode, path, { reverse: true })]
+        .find(([node]) => Node.isNode(node) && (node as CustomElement).type === 'token')
+
+    return firstTokenAncestor
+}
+
+const selectionChange = (editor: Editor) => {
+    if (!editor.selection || Range.isCollapsed(editor.selection)) {
         return
     }
 
-    // console.log(`Selection Change: `, selection)
+    const start = Range.start(editor.selection)
+    const end = Range.end(editor.selection)
 
-    const start = Range.start(selection)
-    const end = Range.end(selection)
-    // console.log(`Start Change: `, start)
-    // console.log(`End Change: `, end)
+    const startTokenEntry = getFirstTokenAncestor(editor, start.path)
+    const endTokenEntry = getFirstTokenAncestor(editor, end.path)
 
-    const rootNode = editor as unknown as Node
-    const getFirstTokenAncestor = (path: Path) => {
-        const firstTokenAncestor = [...Node.ancestors(rootNode, path, { reverse: true })]
-            .find(([node, path]) => Node.isNode(node) && (node as CustomElement).type === 'token')
-
-        return firstTokenAncestor
-    }
-    const startToken = getFirstTokenAncestor(start.path)
-    const endToken = getFirstTokenAncestor(end.path)
-    // console.log({ startToken, endToken })
-
-    if (startToken && endToken) {
-        const [_, startPath] = startToken
+    // If we found a start and end token from selection search, expand selection to those token boundaries
+    if (startTokenEntry && endTokenEntry) {
+        const [_, startTokenPath] = startTokenEntry
+        // Get point at start of start token
         const startPoint: Point = {
-            path: startPath,
+            path: startTokenPath,
             offset: 0
         }
 
-        const [endNode, endPath] = endToken
+        // Get point at end of end token
+        const [endToken, endTokenPath] = endTokenEntry
         const endPoint: Point = {
-            path: endPath,
-            offset: (endNode.children[0] as CustomText).text.length
+            path: endTokenPath,
+            // There is assumption here that token contains single text element. (This could be made more robust)
+            offset: (endToken.children[0] as CustomText).text.length
         }
 
-        // console.log({ startPoint, endPoint })
-        Transforms.select(editor, {
+        const selectionLocation = {
             anchor: startPoint,
             focus: endPoint,
-        })
+        }
+
+        Transforms.select(editor, selectionLocation)
     }
 }
 
@@ -148,7 +148,7 @@ const EntityLabeler: React.FC<Props> = props => {
                 const containsSelectionOperations = selectionOperations.length > 0
                 if (props.labelMode === LabelMode.Label && containsSelectionOperations) {
                     // console.log('Operations: ', editor.operations)
-                    debouncedSelectionChange(editor.selection, editor)
+                    debouncedSelectionChange(editor)
                 }
 
                 const customValue = value as CustomElement[]

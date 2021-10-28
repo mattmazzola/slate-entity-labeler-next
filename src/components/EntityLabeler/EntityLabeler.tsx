@@ -94,6 +94,9 @@ type Props = {
 const EntityLabeler: React.FC<Props> = props => {
     const editor = React.useMemo(() => withLabels(withReact(createEditor())), [])
     const [pickerProps, setPickerProps] = React.useState<PickerProps>(initialPickerProps)
+    React.useEffect(() => {
+        console.log({ pickerProps })
+    }, [pickerProps])
     const editorWrapperRef = React.useRef<HTMLDivElement>(null)
     const entityPickerRef = React.useRef<HTMLDivElement>(null)
 
@@ -155,11 +158,14 @@ const EntityLabeler: React.FC<Props> = props => {
                 const left = relativePickerLeft - halfPickerWidth + halfSelectionWidth + window.scrollX
                 const constrainedLeft = Math.max(0, left)
 
-                // Get relative right
+                // Get relative top
                 const pickerSpacer = 10
                 const relativePickerTop = domSelectionRect.top - parentElementRect.top
                 const top = (relativePickerTop + domSelectionRect.height) + pickerSpacer + window.scrollY
-                const bottom = parentElementRect.height - (domSelectionRect.top - parentElementRect.top) + pickerSpacer
+
+                // Get relative bottom (unused)?
+                const relativePickerBottom = domSelectionRect.top - parentElementRect.top
+                const bottom = parentElementRect.height - relativePickerBottom + pickerSpacer
 
                 const pickerProps: PickerProps = {
                     isVisible: true,

@@ -60,8 +60,8 @@ const Wrapper = styled.div<PickerProps>`
     z-index: 1;
 
     opacity: 0;
-    visibility: hidden;
-    transition: transform 0.15s cubic-bezier(.3,1.2,.2,1), left 0.05s ease-in-out;
+    transition: transform 0.15s cubic-bezier(.3,1.2,.2,1), left 200ms ease-in-out;
+    transform: scale(0);
 
     display: grid;
     grid-template-rows: min-content min-content 1fr;
@@ -71,7 +71,7 @@ const Wrapper = styled.div<PickerProps>`
     ${props => props.isVisible
         ? `
             opacity: 1;
-            visibility: visible;
+            transform: scale(1);
         `
         : ``}
 

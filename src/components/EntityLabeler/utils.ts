@@ -1,4 +1,4 @@
-import { Editor, BaseText, Transforms, BaseEditor, Node } from 'slate'
+import { Editor, BaseText, Transforms, BaseEditor, Node, BaseSelection } from 'slate'
 import { ReactEditor } from 'slate-react'
 import { EntityData } from '.'
 import { IEntity, IEntityPlaceholder, IToken, TokenOrEntity, TokenType } from './models'
@@ -118,12 +118,16 @@ export const CustomEditor = {
     toggleBlockEntity(
         editor: CustomEditor,
         entityId: string,
-        entityName: string
+        entityName: string,
+        selection?: BaseSelection
     ) {
         Transforms.wrapNodes(
             editor,
             { type: 'entity', entityId, entityName } as CustomElement,
-            { split: true }
+            {
+                split: true,
+                at: selection ?? undefined
+            }
         )
     }
 }
@@ -182,6 +186,29 @@ export const debounce = <T extends (...args: any[]) => any>(fn: T, time: number)
     }
 
     return debouncedFn
+}
+
+export const isGivenElementChildOfOtherElement = (e: Element, targetParent: Element): boolean => {
+    let currentElement = e
+    let currentCount = 0
+    let maxDomCount = 10
+
+    while (currentElement) {
+        if (currentElement === targetParent) {
+            return true
+        }
+        if (currentCount > maxDomCount) {
+            break
+        }
+        if (currentElement === document.parentElement) {
+            return false
+        }
+
+        currentCount += 1
+        currentElement = currentElement.parentElement!
+    }
+
+    return false
 }
 
 /**

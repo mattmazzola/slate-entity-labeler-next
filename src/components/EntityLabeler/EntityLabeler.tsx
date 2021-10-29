@@ -1,72 +1,19 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Ancestor, createEditor, Editor, Node, NodeEntry, Path, Point, Range, SelectionOperation, Transforms } from 'slate'
+import { Ancestor, BaseSelection, createEditor, Editor, Node, NodeEntry, Path, Point, Range, SelectionOperation, Transforms } from 'slate'
 import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from 'slate-react'
 
-import { convertEntitiesAndTextToTokenizedEditorValue, CustomEditor, CustomText, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels } from './utils'
-import { DebugMode, IEntity, LabelMode } from './models'
+import { convertEntitiesAndTextToTokenizedEditorValue, isGivenElementChildOfOtherElement, CustomEditor, CustomText, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels } from './utils'
+import { DebugMode, IEntity, LabelMode, EntityData } from './models'
 import { EntityPicker, PickerProps } from './EntityPicker'
 import { TokenElement } from './TokenElement'
 import { EntityElement } from './EntityElement'
-import { EntityData } from '.'
 
 const getFirstTokenAncestor = (rootNode: Node, path: Path) => {
     const firstTokenAncestor = [...Node.ancestors(rootNode, path, { reverse: true })]
         .find(([node]) => Node.isNode(node) && (node as CustomElement).type === 'token')
 
     return firstTokenAncestor
-}
-
-const selectionChange = (
-    editor: Editor,
-    parentRef: React.RefObject<HTMLDivElement>
-) => {
-    if (!editor.selection || Range.isCollapsed(editor.selection)) {
-        return
-    }
-
-    const start = Range.start(editor.selection)
-    const end = Range.end(editor.selection)
-
-    const startTokenEntry = getFirstTokenAncestor(editor, start.path)
-    const endTokenEntry = getFirstTokenAncestor(editor, end.path)
-
-    // If we found a start and end token from selection search, expand selection to those token boundaries
-    if (startTokenEntry && endTokenEntry) {
-        const [_, startTokenPath] = startTokenEntry
-        // Get point at start of start token
-        const startPoint: Point = {
-            path: startTokenPath,
-            offset: 0
-        }
-
-        // Get point at end of end token
-        const [endToken, endTokenPath] = endTokenEntry
-        const endPoint: Point = {
-            path: endTokenPath,
-            // There is assumption here that token contains single text element. (This could be made more robust)
-            offset: (endToken.children[0] as CustomText).text.length
-        }
-
-        const selectionLocation = {
-            anchor: startPoint,
-            focus: endPoint,
-        }
-
-        Transforms.select(editor, selectionLocation)
-    }
-
-    if (parentRef.current) {
-        const parentElement = parentRef.current
-        const domSelection = globalThis.getSelection()
-        if (domSelection) {
-            const parentElementBox = parentElement.getBoundingClientRect()
-            const domSelectionRange = domSelection.getRangeAt(0)
-            const domSelectionBox = domSelectionRange.getBoundingClientRect()
-
-            console.log({ parentElementBox, domSelectionBox })
-        }
-    }
 }
 
 const editOperationTypes = [
@@ -100,9 +47,6 @@ type Props = {
 const EntityLabeler: React.FC<Props> = props => {
     const editor = React.useMemo(() => withLabels(withReact(createEditor())), [])
     const [pickerProps, setPickerProps] = React.useState<PickerProps>(initialPickerProps)
-    React.useEffect(() => {
-        console.log({ pickerProps })
-    }, [pickerProps])
     const editorWrapperRef = React.useRef<HTMLDivElement>(null)
     const entityPickerRef = React.useRef<HTMLDivElement>(null)
 
@@ -110,7 +54,11 @@ const EntityLabeler: React.FC<Props> = props => {
     const debouncedTextChange = React.useCallback(debounce(props.onChangeText, 300), [props.onChangeText])
     const debouncedEntitiesChange = React.useCallback(debounce(props.onChangeEntities, 300), [props.onChangeEntities])
     const debouncedSelectionChange = React.useCallback(debounce(() => {
-        if (!editor.selection || Range.isCollapsed(editor.selection)) {
+        if (!editor.selection) {
+            return
+        }
+
+        if (Range.isCollapsed(editor.selection)) {
             setPickerProps(p => ({
                 ...p,
                 isVisible: false
@@ -151,6 +99,7 @@ const EntityLabeler: React.FC<Props> = props => {
 
     const [value, setValue] = React.useState<CustomElement[]>(defaultValue)
     const lastLabelModeRef = React.useRef<LabelMode | undefined>()
+    const lastNonNullSelectionRef = React.useRef<BaseSelection>(null)
 
     React.useEffect(() => {
         debouncedValueChange(value)
@@ -199,12 +148,52 @@ const EntityLabeler: React.FC<Props> = props => {
         lastLabelModeRef.current = props.labelMode
     }, [props.labelMode])
 
+    const onBlurSlateEditorWrapper: React.FocusEventHandler<HTMLDivElement> = (e) => {
+        const focusedElement = e.relatedTarget as Element
+        if (entityPickerRef.current) {
+            const isFocusedElementChildOfPicker = isGivenElementChildOfOtherElement(focusedElement, entityPickerRef.current)
+
+            if (isFocusedElementChildOfPicker) {
+                return
+            }
+        }
+
+        setPickerProps(p => ({
+            ...p,
+            isVisible: false
+        }))
+    }
+
+    const onPickerCreateEntity = () => {
+        const randomValue = Math.floor(Math.random() * 100)
+        const entityPrefix = `entityName-${randomValue}`
+        onClickPickerOption(entityPrefix)
+    }
+
+    const onClickPickerOption = (entityPrefix: string) => {
+        const randomValue = Math.floor(Math.random() * 10000)
+        const entityId = `${entityPrefix}-${randomValue}`
+        const entityName = `${entityPrefix}-${randomValue}`
+        const selection = editor.selection ?? lastNonNullSelectionRef.current
+
+        CustomEditor.toggleBlockEntity(editor, entityId, entityName, selection)
+
+        setPickerProps(p => ({
+            ...p,
+            isVisible: false
+        }))
+    }
 
     return (
         <Slate
             editor={editor}
             value={value}
             onChange={value => {
+                // If selection is defined, save selection for use after it is removed due to blur
+                if (editor.selection !== null) {
+                    lastNonNullSelectionRef.current = editor.selection
+                }
+
                 const attemptedEditOperations = editor.operations.filter(op => {
                     return editOperationTypes.find(editOpType => editOpType === op.type)
                 })
@@ -220,6 +209,7 @@ const EntityLabeler: React.FC<Props> = props => {
                 const selectionOperations = editor.operations
                     .filter(op => selectionOperationType === op.type)
                 const containsSelectionOperations = selectionOperations.length > 0
+
 
                 if (props.labelMode === LabelMode.Label && containsSelectionOperations) {
                     debouncedSelectionChange()
@@ -245,6 +235,7 @@ const EntityLabeler: React.FC<Props> = props => {
         >
             <EditorWrapper
                 ref={editorWrapperRef}
+                onBlur={onBlurSlateEditorWrapper}
             >
                 <Editable
                     renderElement={renderElementProps => renderElement(renderElementProps, props.debugMode)}
@@ -254,7 +245,8 @@ const EntityLabeler: React.FC<Props> = props => {
                     isVisible={pickerProps.isVisible}
                     position={pickerProps.position}
                     options={['one', 'two', 'three', 'three', 'three', 'three', 'three']}
-                    onClickCreate={(entityId, entityName) => CustomEditor.toggleBlockEntity(editor, entityId, entityName)}
+                    onClickCreate={onPickerCreateEntity}
+                    onClickOption={onClickPickerOption}
                 />
             </EditorWrapper>
         </Slate>

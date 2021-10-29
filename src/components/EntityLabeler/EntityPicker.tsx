@@ -13,19 +13,33 @@ export type PickerProps = {
 
 type Props = PickerProps & {
     options: string[]
-    onClickCreate: (entityId: string, entityName: string) => void
+    onClickCreate: () => void
+    onClickOption: (option: string) => void
 }
 
 export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forwardedRef) => {
-    const randomValue = Math.floor(Math.random() * 10000)
-    const entityId = `entityId-${randomValue}`
-    const entityName = `entityName-${randomValue}`
+    const [searchInput, setSearchInput] = React.useState('')
+    const [highlightIndex, setHighlightIndex] = React.useState(0)
+    const onChangeSearchInput: React.ChangeEventHandler<HTMLInputElement> = event => {
+        setSearchInput(event.target.value)
+    }
+
+    React.useEffect(() => {
+        if (props.isVisible === false) {
+            setSearchInput('')
+            setHighlightIndex(0)
+        }
+    }, [props.isVisible])
+
     const wrapperStyles = {
         '--opacity': props.isVisible ? '1' : '0',
         '--scale': props.isVisible ? '1' : '0',
         '--top': `${props.position.top}px`,
         '--left': `${props.position.left}px`,
     } as React.CSSProperties
+
+    const filteredOptions = props.options
+        .filter(o => o.includes(searchInput))
 
     return (
         <Wrapper
@@ -34,14 +48,12 @@ export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forw
             position={props.position}
             style={wrapperStyles}
         >
-            <div>
-                Entity
-            </div>
-            <button onClick={() => props.onClickCreate(entityId, entityName)}>Create Entity</button>
+            <Input type="text" value={searchInput} onChange={onChangeSearchInput} />
+            <button onClick={props.onClickCreate}>Create Entity</button>
             <OptionsList>
-                {props.options.map((option, i) => {
+                {filteredOptions.map((option, i) => {
                     return (
-                        <div key={i}>{option}</div>
+                        <button key={i} onClick={() => props.onClickOption(option)}>{option}</button>
                     )
                 })}
             </OptionsList>
@@ -76,6 +88,12 @@ const Wrapper = styled.div<PickerProps>`
     left: var(--left);
 `
 
+const Input = styled.input`
+    border: 1px solid hsl(0deg 0% 50%);
+`
+
 const OptionsList = styled.div`
+    display: flex;
+    flex-direction: column;
     overflow: auto;
 `

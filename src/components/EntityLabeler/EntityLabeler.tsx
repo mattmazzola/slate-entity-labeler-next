@@ -79,7 +79,13 @@ const editOperationTypes = [
 
 const selectionOperationType = 'set_selection'
 
-const initialPickerProps: PickerProps = { isVisible: false }
+const initialPickerProps: PickerProps = {
+    isVisible: false,
+    position: {
+        top: 0,
+        left: 0,
+    }
+}
 
 type Props = {
     text: string,
@@ -105,9 +111,10 @@ const EntityLabeler: React.FC<Props> = props => {
     const debouncedEntitiesChange = React.useCallback(debounce(props.onChangeEntities, 300), [props.onChangeEntities])
     const debouncedSelectionChange = React.useCallback(debounce(() => {
         if (!editor.selection || Range.isCollapsed(editor.selection)) {
-            setPickerProps({
+            setPickerProps(p => ({
+                ...p,
                 isVisible: false
-            })
+            }))
             return
         }
 
@@ -175,9 +182,10 @@ const EntityLabeler: React.FC<Props> = props => {
                     const newValue = deserialize(serializedValue)
                     setValue(newValue)
                     // Reset picker
-                    setPickerProps({
+                    setPickerProps(p => ({
+                        ...p,
                         isVisible: false
-                    })
+                    }))
                     break
                 }
                 case LabelMode.Label: {

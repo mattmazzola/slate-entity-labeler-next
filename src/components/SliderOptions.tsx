@@ -9,7 +9,7 @@ type Props = {
 
 export const SliderOptions: React.FC<Props> = (props) => {
     const optionsIndex = props.options.findIndex(o => o === props.selectedOption)
-
+    const highlightStyles = { '--optionsIndex': optionsIndex } as React.CSSProperties
     return (
         <Wrapper>
             {props.options.map((option, i) => {
@@ -17,7 +17,7 @@ export const SliderOptions: React.FC<Props> = (props) => {
                     <Option key={i} onClick={() => props.onChangeSelectedOption(option)}>{option}</Option>
                 )
             })}
-            <Highlight position={optionsIndex} />
+            <Highlight style={highlightStyles} />
         </Wrapper>
     )
 }
@@ -48,7 +48,7 @@ const Option = styled.button`
     cursor: pointer;
 `
 
-const Highlight = styled.div<{ position: number }>`
+const Highlight = styled.div`
     border-radius: var(--optionRadius);
     background: hsl(80deg 80% 40% / 0.8);
     width: calc(var(--optionWidth) * 1px);
@@ -57,7 +57,7 @@ const Highlight = styled.div<{ position: number }>`
     padding: var(--optionPadding);
     pointer-events: none;
 
-    ${props => `transform: translate(calc((${props.position} * var(--optionGap)) + (${props.position} * var(--optionWidth) * 1px)));`}
+    transform: translate(calc((var(--optionsIndex) * var(--optionGap)) + (var(--optionsIndex) * var(--optionWidth) * 1px)));
     transition: transform 200ms;
 
 `

@@ -8,8 +8,7 @@ type Position = {
 
 export type PickerProps = {
     isVisible: boolean
-    // TODO: Consider discriminated union, since position should not be set when not visible
-    position?: Position
+    position: Position
 }
 
 type Props = PickerProps & {
@@ -21,12 +20,19 @@ export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forw
     const randomValue = Math.floor(Math.random() * 10000)
     const entityId = `entityId-${randomValue}`
     const entityName = `entityName-${randomValue}`
+    const wrapperStyles = {
+        '--opacity': props.isVisible ? '1' : '0',
+        '--scale': props.isVisible ? '1' : '0',
+        '--top': `${props.position.top}px`,
+        '--left': `${props.position.left}px`,
+    } as React.CSSProperties
 
     return (
         <Wrapper
             ref={forwardedRef}
             isVisible={props.isVisible}
             position={props.position}
+            style={wrapperStyles}
         >
             <div>
                 Entity
@@ -44,11 +50,12 @@ export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forw
 })
 
 const Wrapper = styled.div<PickerProps>`
-    position: absolute;
+    display: grid;
+    grid-template-rows: min-content min-content 1fr;
+    gap: 0.25em;
 
     color: black;
     font-size: 1rem;
-
     background: white;
     border: 1px solid var(--color-neutralTertiary);
     border-radius: 4px;
@@ -57,32 +64,16 @@ const Wrapper = styled.div<PickerProps>`
     max-width: 300px;
     max-height: 200px;
     padding: 0.25em;
-    transition: opacity .75s;
     z-index: 1;
 
-    opacity: 0;
-    transition: transform 0.15s cubic-bezier(.3,1.2,.2,1), left 200ms ease-in-out;
-    transform: scale(0);
+    opacity: var(--opacity);
+    transform: scale(var(--scale));
+    transform-origin: 50% 10px;
+    transition: transform 0.2s cubic-bezier(.3,1.2,.2,1), left 0.2s ease-in-out, opacity 0.7s;
 
-    display: grid;
-    grid-template-rows: min-content min-content 1fr;
-    gap: 0.25em;
-    top: 50px;
-
-    ${props => props.isVisible
-        ? `
-            opacity: 1;
-            transform: scale(1);
-        `
-        : ``}
-
-    // TODO: Consider CSS variables instead of props?
-    ${props => props.position
-        ? `
-            left: ${props.position.left}px;
-            top: ${props.position.top}px;
-        `
-        : ``}
+    position: absolute;
+    top: var(--top);
+    left: var(--left);
 `
 
 const OptionsList = styled.div`

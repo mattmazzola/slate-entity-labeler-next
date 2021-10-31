@@ -1,5 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
+import { Entity } from './models'
 import { FuseMatch } from '../FuseMatch'
 import { usePicker } from './usePicker'
 
@@ -14,14 +15,14 @@ export type PickerProps = {
 }
 
 type Props = PickerProps & {
-    options: string[]
+    entities: Entity[]
     onClickCreate: () => void
     onSelectOption: (option: string) => void
 }
 
 export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forwardedRef) => {
     const { searchText, setSearchText, onKeyDown, matchedOptions, onClickOption, highlightIndex, resetHighlighIndex } = usePicker(
-        props.options.map(o => ({ name: o })),
+        props.entities,
         100,
         optionObject => props.onSelectOption(optionObject.name),
     )

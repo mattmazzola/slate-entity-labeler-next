@@ -5,10 +5,7 @@
 import * as React from 'react'
 import Fuse from 'fuse.js'
 import { convertMatchedTextIntoMatchedOption, MatchedOption } from '../FuseMatch'
-
-type IOption = {
-    name: string
-}
+import { IOption } from './models'
 
 /**
  * See http://fusejs.io/ for information about options meaning and configuration

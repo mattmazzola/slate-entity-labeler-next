@@ -1,20 +1,26 @@
 import React from 'react'
 import styled from 'styled-components'
+import { LabelMode } from './EntityLabeler'
+
+type Option = {
+    name: string
+    value: LabelMode
+}
 
 type Props = {
-    options: string[]
-    selectedOption: string
-    onChangeSelectedOption: (option: string) => void
+    options: Option[]
+    selectedOption: LabelMode
+    onChangeSelectedOption: (mode: LabelMode) => void
 }
 
 export const SliderOptions: React.FC<Props> = (props) => {
-    const optionsIndex = props.options.findIndex(o => o === props.selectedOption)
+    const optionsIndex = props.options.findIndex(o => o.value === props.selectedOption)
     const highlightStyles = { '--optionsIndex': optionsIndex } as React.CSSProperties
     return (
         <Wrapper>
             {props.options.map((option, i) => {
                 return (
-                    <Option key={i} onClick={() => props.onChangeSelectedOption(option)}>{option}</Option>
+                    <Option key={i} onClick={() => props.onChangeSelectedOption(option.value)}>{option.name}</Option>
                 )
             })}
             <Highlight style={highlightStyles} />

@@ -1,7 +1,7 @@
 import { Editor, BaseText, Transforms, BaseEditor, Node, BaseSelection } from 'slate'
 import { ReactEditor } from 'slate-react'
 import { EntityData } from '.'
-import { IEntity, IEntityPlaceholder, IToken, TokenOrEntity, TokenType } from './models'
+import { LabeledEntity, IEntityPlaceholder, IToken, TokenOrEntity, TokenType } from './models'
 
 type CustomElementBase = {
     children: (CustomText | CustomElement)[]
@@ -67,7 +67,7 @@ export const CustomEditor = {
         })]
 
         const entities = entitiesNodeEntries
-            .map<IEntity<EntityData>>(([node, path]) => {
+            .map<LabeledEntity<EntityData>>(([node, path]) => {
                 // Attempt to use Slate Node API but it was more complicated
                 // Note.elements returns root Node?
                 // const tokenNodeEntries = [...Node.elements(entityNode, {
@@ -99,7 +99,7 @@ export const CustomEditor = {
                 }
 
                 const text = Node.string(entityNode)
-                const entity: IEntity<EntityData> = {
+                const entity: LabeledEntity<EntityData> = {
                     data: {
                         name: entityNode.entityName,
                         text
@@ -291,7 +291,7 @@ export const tokenizeText = (
  */
 export const convertEntitiesAndTextToTokenizedEditorValue = (
     text: string,
-    customEntities: IEntity<EntityData>[]
+    customEntities: LabeledEntity<EntityData>[]
 ) => {
     const normalizedEntities = normalizeEntities(customEntities)
     const lines = text.split('\n')
@@ -318,7 +318,7 @@ export const convertEntitiesAndTextToTokenizedEditorValue = (
 
 export const normalizeEntities = <T>(x: T): T => { return x }
 
-export const labelTokens = <T>(tokens: IToken[], customEntities: IEntity<T>[]): TokenOrEntity<T>[] => {
+export const labelTokens = <T>(tokens: IToken[], customEntities: LabeledEntity<T>[]): TokenOrEntity<T>[] => {
     return wrapTokensWithEntities(tokens, customEntities)
 }
 
@@ -350,7 +350,7 @@ export const findLastIndex = <T>(xs: T[], f: (x: T) => boolean): number => {
  * @param tokens Array of Tokens
  * @param entities Array of Custom Entities with Token Indicies
  */
-export const wrapTokensWithEntities = <T>(tokens: IToken[], entities: IEntity<T>[]): TokenOrEntity<T>[] => {
+export const wrapTokensWithEntities = <T>(tokens: IToken[], entities: LabeledEntity<T>[]): TokenOrEntity<T>[] => {
     // If there are no entities than no work to do, return tokens
     if (entities.length === 0) {
         return tokens
@@ -478,7 +478,7 @@ export const convertToSlateValue = (tokensWithEntities: TokenOrEntity<EntityData
  *
  * @param customEntities List of custom entities
  */
-export const warnAboutOverlappingEntities = (customEntities: IEntity<object>[]): boolean => {
+export const warnAboutOverlappingEntities = (customEntities: LabeledEntity<object>[]): boolean => {
     return customEntities.some((entity, i) => {
         return customEntities
             .slice(i + 1)

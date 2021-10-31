@@ -26,7 +26,7 @@ export interface IToken {
     tokenIndex: number
 }
 
-export interface IEntity<T> {
+export interface LabeledEntity<T> {
     startTokenIndex: number
     tokenLength: number
     id: string
@@ -35,8 +35,17 @@ export interface IEntity<T> {
 
 export interface IEntityPlaceholder<T> {
     type: TokenType.EntityPlaceholder
-    entity: IEntity<T>
+    entity: LabeledEntity<T>
     tokens: IToken[]
 }
 
 export type TokenOrEntity<T> = IToken | IEntityPlaceholder<T>
+
+export type Entity = {
+    id: string
+    name: string
+}
+
+export type IOption = {
+    name: string
+}

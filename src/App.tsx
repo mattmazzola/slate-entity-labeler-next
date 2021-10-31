@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import EntityLabeler, { CustomElement, IEntity, DebugMode, LabelMode, EntityData } from './components/EntityLabeler'
+import EntityLabeler, { CustomElement, LabeledEntity, LabelMode, EntityData, Entity } from './components/EntityLabeler'
 import SliderOptions from './components/SliderOptions'
 
 const defaultText = `
@@ -14,9 +14,9 @@ Third line, let's test this
 const App: React.FC = () => {
   const [text, setText] = React.useState<string>(defaultText)
   const [labelMode, setLabelMode] = React.useState<LabelMode>(LabelMode.EditText)
-  const [debugMode, setDebugMode] = React.useState<DebugMode>(DebugMode.Debug)
-  const [entities, setEntities] = React.useState<IEntity<EntityData>[]>([])
+  const [labeledEntities, setLabeledEntities] = React.useState<LabeledEntity<EntityData>[]>([])
   const [value, setValue] = React.useState<CustomElement[] | undefined>()
+  const [optionString, setOptionsString] = React.useState('option 1\noption 2\noption 3')
 
   const onChangeValue = (value: CustomElement[]) => {
     setValue(value)
@@ -26,17 +26,37 @@ const App: React.FC = () => {
     setText(text)
   }
 
-  const onChangeEntities = (entities: IEntity<EntityData>[]) => {
-    setEntities(entities)
+  const onChangeLabeledEntities = (labeledEntities: LabeledEntity<EntityData>[]) => {
+    setLabeledEntities(labeledEntities)
   }
 
   const onChangeSelectedOption = (option: string) => {
     setLabelMode(option as LabelMode)
   }
 
-  const onChangeDebugSelectedOption = (option: string) => {
-    setDebugMode(option as DebugMode)
+  const onChangeOptionsString: React.ChangeEventHandler<HTMLTextAreaElement> = event => {
+    setOptionsString(event.target.value)
   }
+
+  const labelModeOptions = [
+    {
+      name: `1: Edit`,
+      value: LabelMode.EditText
+    },
+    {
+      name: '2: Label',
+      value: LabelMode.Label
+    }
+  ]
+
+  const entities = optionString.split('\n')
+    .filter(o => o.length > 0)
+    .map<Entity>((o, i) => {
+      return {
+        name: o,
+        id: `id-${o}-i`
+      }
+    })
 
   return (
     <Wrapper>
@@ -44,23 +64,24 @@ const App: React.FC = () => {
         <h1>Slate Entity Labeler</h1>
       </header>
       <main>
-        <div>
+        <section>
+          <h2>Options</h2>
+          <EntityTextarea value={optionString} onChange={onChangeOptionsString} rows={5} />
+        </section>
+        <section>
           <SliderOptions
-            options={[LabelMode.EditText, LabelMode.Label]}
+            options={labelModeOptions}
             selectedOption={labelMode}
             onChangeSelectedOption={onChangeSelectedOption}
           />
-        </div>
-
-        <section>
-          <h2>Editor</h2>
           <EntityLabeler
             text={text}
             labelMode={labelMode}
+            labeledEntities={labeledEntities}
             entities={entities}
             onChangeValue={onChangeValue}
             onChangeText={onChangeText}
-            onChangeEntities={onChangeEntities}
+            onChangeEntities={onChangeLabeledEntities}
           />
         </section>
         <DataSection>
@@ -73,7 +94,7 @@ const App: React.FC = () => {
               <h2>Entities:</h2>
               <CodeContainer>
                 <pre>
-                  <code>{entities ? JSON.stringify(entities, null, 4) : "Empty"}</code>
+                  <code>{labeledEntities ? JSON.stringify(labeledEntities, null, 4) : "Empty"}</code>
                 </pre>
               </CodeContainer>
             </div>
@@ -106,6 +127,16 @@ const DataSection = styled.section`
 `
 
 const ValueDiv = styled.div`
+`
+
+const EntityTextarea = styled.textarea`
+  border-radius: 3px;
+  border: 1px solid hsl(0deg 50% 50%);
+  padding: 0.25rem;
+  font-size: 1rem;
+  font: var(--font-family-sans-serif);
+  background: transparent;
+  color: var(--color-gray-100);
 `
 
 const CodeContainer = styled.div`

@@ -46,9 +46,8 @@ const GlobalStyles = createGlobalStyle`
         --color-urgent: ${COLORS.urgent};
 
         --color-entities-base: ${COLORS.entities.base};
-        --color-entities-inline: ${COLORS.entities.inline};
+        --color-entities-name: ${COLORS.entities.name};
         --color-token-base: ${COLORS.token.base};
-        --color-token-inline: ${COLORS.token.inline};
 
         --font-weight-normal: ${WEIGHTS.normal};
         --font-weight-medium: ${WEIGHTS.medium};

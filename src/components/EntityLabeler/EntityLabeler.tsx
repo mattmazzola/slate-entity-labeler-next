@@ -207,14 +207,13 @@ const EntityLabeler: React.FC<Props> = props => {
                     .filter(op => selectionOperationType === op.type)
                 const containsSelectionOperations = selectionOperations.length > 0
 
+                // Apply values changes
+                const customValue = value as CustomElement[]
+                setValue(customValue)
 
                 if (props.labelMode === LabelMode.Label && containsSelectionOperations) {
                     debouncedSelectionChange()
                 }
-
-                // Apply values changes
-                const customValue = value as CustomElement[]
-                setValue(customValue)
 
                 const isAstChange = editor.operations.some(op => selectionOperationType !== op.type)
                 if (isAstChange) {
@@ -255,11 +254,6 @@ const EditorWrapper = styled.div`
     border-radius: 3px;
     padding: 0.5rem;
     position: relative;
-
-    [data-slate-editor="true"] :is(p, pre) {
-        padding: 1rem;
-        margin: 1rem;
-    }
 `
 
 const renderElement = (props: RenderElementProps, mode: DebugMode) => {

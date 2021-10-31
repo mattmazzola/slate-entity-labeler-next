@@ -14,13 +14,16 @@ export const COLORS = {
     secondary: 'hsl(180deg 34% 37%)',
     urgent: 'hsl(0deg 55% 54%)',
 
+    picker: {
+        highlight: `hsl(80deg 80% 40% / 0.8)`,
+    },
+
     entities: {
         base: `hsl(120deg 50% 80% / 0.4)`,
-        inline: `hsl(10deg 50% 80% / 0.4)`
+        name: `hsl(120deg 30% 50%)`,
     },
     token: {
         base: `hsl(180deg 50% 80% / 0.4)`,
-        inline: `hsl(30deg 50% 80% / 0.4)`
     }
 }
 

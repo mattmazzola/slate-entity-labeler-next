@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Ancestor, BaseSelection, createEditor, Editor, Node, NodeEntry, Path, Point, Range, SelectionOperation, Transforms } from 'slate'
+import { Ancestor, BaseSelection, createEditor, Node, NodeEntry, Path, Point, Range, Transforms } from 'slate'
 import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from 'slate-react'
 
 import { convertEntitiesAndTextToTokenizedEditorValue, isGivenElementChildOfOtherElement, CustomEditor, CustomText, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels } from './utils'
@@ -165,6 +165,8 @@ const EntityLabeler: React.FC<Props> = props => {
     }
 
     const onPickerCreateEntity = () => {
+        // TODO: Likely open more complicated entity creation wizard
+        // But for now just create random entity
         const randomValue = Math.floor(Math.random() * 100)
         const entityPrefix = `entityName-${randomValue}`
         onClickPickerOption(entityPrefix)
@@ -246,7 +248,7 @@ const EntityLabeler: React.FC<Props> = props => {
                     position={pickerProps.position}
                     options={['one', 'two', 'three', 'three', 'three', 'three', 'three']}
                     onClickCreate={onPickerCreateEntity}
-                    onClickOption={onClickPickerOption}
+                    onSelectOption={onClickPickerOption}
                 />
             </EditorWrapper>
         </Slate>

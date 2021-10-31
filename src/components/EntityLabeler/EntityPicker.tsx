@@ -1,5 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
+import { FuseMatch } from '../FuseMatch'
+import { usePicker } from './usePicker'
 
 type Position = {
     top: number
@@ -14,20 +16,24 @@ export type PickerProps = {
 type Props = PickerProps & {
     options: string[]
     onClickCreate: () => void
-    onClickOption: (option: string) => void
+    onSelectOption: (option: string) => void
 }
 
 export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forwardedRef) => {
-    const [searchInput, setSearchInput] = React.useState('')
-    const [highlightIndex, setHighlightIndex] = React.useState(0)
+    const { searchText, setSearchText, onKeyDown, matchedOptions, onClickOption, highlightIndex, resetHighlighIndex } = usePicker(
+        props.options.map(o => ({ name: o })),
+        100,
+        optionObject => props.onSelectOption(optionObject.name),
+    )
+
     const onChangeSearchInput: React.ChangeEventHandler<HTMLInputElement> = event => {
-        setSearchInput(event.target.value)
+        setSearchText(event.target.value)
     }
 
     React.useEffect(() => {
         if (props.isVisible === false) {
-            setSearchInput('')
-            setHighlightIndex(0)
+            setSearchText('')
+            resetHighlighIndex()
         }
     }, [props.isVisible])
 
@@ -38,22 +44,26 @@ export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forw
         '--left': `${props.position.left}px`,
     } as React.CSSProperties
 
-    const filteredOptions = props.options
-        .filter(o => o.includes(searchInput))
-
     return (
         <Wrapper
             ref={forwardedRef}
             isVisible={props.isVisible}
             position={props.position}
             style={wrapperStyles}
+            onKeyDown={onKeyDown}
         >
-            <Input type="text" value={searchInput} onChange={onChangeSearchInput} />
+            <Input type="text" value={searchText} onChange={onChangeSearchInput} />
             <button onClick={props.onClickCreate}>Create Entity</button>
             <OptionsList>
-                {filteredOptions.map((option, i) => {
+                {matchedOptions.map((matchedOption, i) => {
                     return (
-                        <button key={i} onClick={() => props.onClickOption(option)}>{option}</button>
+                        <Option
+                            key={i}
+                            onClick={() => onClickOption(matchedOption.original)}
+                            highlighted={highlightIndex === i}
+                        >
+                            <FuseMatch matches={matchedOption.matchedStrings} />
+                        </Option>
                     )
                 })}
             </OptionsList>
@@ -89,11 +99,29 @@ const Wrapper = styled.div<PickerProps>`
 `
 
 const Input = styled.input`
-    border: 1px solid hsl(0deg 0% 50%);
+    border: 1px solid hsl(0deg 0% 60%);
+    padding: 0.25rem;
+
+    :focus {
+        border-color: hsl(0deg 0% 40%);
+    }
 `
 
 const OptionsList = styled.div`
     display: flex;
     flex-direction: column;
     overflow: auto;
+`
+
+const Option = styled.button<{ highlighted: boolean }>`
+    padding: 0.25rem;
+    cursor: pointer;
+    border: none;
+    border-radius: 3px;
+    background: ${props => props.highlighted ? `rgba(187, 255, 187, 1.0);` : 'none;'}
+
+    :hover, :focus {
+        background: rgba(187, 255, 187, 0.5);
+        outline: none;
+    }
 `

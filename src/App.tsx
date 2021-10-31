@@ -50,12 +50,6 @@ const App: React.FC = () => {
             selectedOption={labelMode}
             onChangeSelectedOption={onChangeSelectedOption}
           />
-
-          <SliderOptions
-            options={[DebugMode.Normal, DebugMode.Debug]}
-            selectedOption={debugMode}
-            onChangeSelectedOption={onChangeDebugSelectedOption}
-          />
         </div>
 
         <section>
@@ -63,7 +57,6 @@ const App: React.FC = () => {
           <EntityLabeler
             text={text}
             labelMode={labelMode}
-            debugMode={debugMode}
             entities={entities}
             onChangeValue={onChangeValue}
             onChangeText={onChangeText}

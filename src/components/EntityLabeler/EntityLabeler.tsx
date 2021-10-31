@@ -19,9 +19,12 @@ const getFirstTokenAncestor = (rootNode: Node, path: Path) => {
 const editOperationTypes = [
     'remove_text',
     'insert_text',
-    // Need these operations to use Transforms.wrapNodes
-    // 'remove_node',
-    // 'insert_node',
+]
+
+// Need these operations to use Transforms.wrapNodes
+const externalOperationsType = [
+    'remove_node',
+    'insert_node',
 ]
 
 const selectionOperationType = 'set_selection'
@@ -38,17 +41,22 @@ type Props = {
     text: string,
     entities: IEntity<EntityData>[]
     labelMode: LabelMode
-    debugMode: DebugMode
     onChangeValue: (value: CustomElement[]) => void
     onChangeText: (text: string) => void
     onChangeEntities: (entities: IEntity<EntityData>[]) => void
 }
+
+const entityLabelerDebugKey = 'entity-labeler'
 
 const EntityLabeler: React.FC<Props> = props => {
     const editor = React.useMemo(() => withLabels(withReact(createEditor())), [])
     const [pickerProps, setPickerProps] = React.useState<PickerProps>(initialPickerProps)
     const editorWrapperRef = React.useRef<HTMLDivElement>(null)
     const entityPickerRef = React.useRef<HTMLDivElement>(null)
+    const debugModeValue = localStorage.getItem(entityLabelerDebugKey)
+    const debugMode = typeof debugModeValue === 'string' && debugModeValue !== null
+        ? DebugMode.Debug
+        : DebugMode.Normal
 
     const debouncedValueChange = React.useCallback(debounce(props.onChangeValue, 300), [props.onChangeValue])
     const debouncedTextChange = React.useCallback(debounce(props.onChangeText, 300), [props.onChangeText])
@@ -240,7 +248,7 @@ const EntityLabeler: React.FC<Props> = props => {
                 onBlur={onBlurSlateEditorWrapper}
             >
                 <Editable
-                    renderElement={renderElementProps => renderElement(renderElementProps, props.debugMode)}
+                    renderElement={renderElementProps => renderElement(renderElementProps, debugMode)}
                 />
                 <EntityPicker
                     ref={entityPickerRef}

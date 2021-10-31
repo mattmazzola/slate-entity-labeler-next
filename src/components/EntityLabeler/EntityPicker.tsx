@@ -100,11 +100,11 @@ const Wrapper = styled.div<PickerProps>`
 `
 
 const Input = styled.input`
-    border: 1px solid hsl(0deg 0% 60%);
+    border: 1px solid var(--color-grey-300);
     padding: 0.25rem;
 
     :focus {
-        border-color: hsl(0deg 0% 40%);
+        border-color: var(--color-grey-200);
     }
 `
 
@@ -121,7 +121,8 @@ const Option = styled.button<{ highlighted: boolean }>`
     border-radius: 3px;
     background: ${props => props.highlighted ? `rgba(187, 255, 187, 1.0);` : 'none;'}
 
-    :hover, :focus {
+    :hover,
+    :focus {
         background: rgba(187, 255, 187, 0.5);
         outline: none;
     }

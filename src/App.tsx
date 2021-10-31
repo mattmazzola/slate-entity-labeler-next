@@ -9,14 +9,25 @@ Fourth word second word
 Third line, let's test this
 `.trim()
 
-
+const defaultOptions = `
+apples
+oranges
+pears
+blueberries
+pickles
+cucumbers
+olives
+rasberries
+watermelons
+plums
+`.trim()
 
 const App: React.FC = () => {
   const [text, setText] = React.useState<string>(defaultText)
   const [labelMode, setLabelMode] = React.useState<LabelMode>(LabelMode.EditText)
   const [labeledEntities, setLabeledEntities] = React.useState<LabeledEntity<EntityData>[]>([])
   const [value, setValue] = React.useState<CustomElement[] | undefined>()
-  const [optionString, setOptionsString] = React.useState('option 1\noption 2\noption 3')
+  const [optionString, setOptionsString] = React.useState(defaultOptions)
 
   const onChangeValue = (value: CustomElement[]) => {
     setValue(value)
@@ -131,7 +142,7 @@ const ValueDiv = styled.div`
 
 const EntityTextarea = styled.textarea`
   border-radius: 3px;
-  border: 1px solid hsl(0deg 50% 50%);
+  border: 1px solid var(--color-gray-300);
   padding: 0.25rem;
   font-size: 1rem;
   font: var(--font-family-sans-serif);

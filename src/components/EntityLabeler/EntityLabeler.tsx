@@ -6,8 +6,7 @@ import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from '
 import { convertEntitiesAndTextToTokenizedEditorValue, isGivenElementChildOfOtherElement, CustomEditor, CustomText, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels } from './utils'
 import { DebugMode, LabeledEntity, LabelMode, EntityData, Entity } from './models'
 import { EntityPicker, PickerProps } from './EntityPicker'
-import { TokenElement } from './TokenElement'
-import { EntityElement } from './EntityElement'
+import { TokenElement, EntityElement, ParagraphElement } from './CustomElements'
 
 const getFirstTokenAncestor = (rootNode: Node, path: Path) => {
     const firstTokenAncestor = [...Node.ancestors(rootNode, path, { reverse: true })]
@@ -106,28 +105,13 @@ const EntityLabeler: React.FC<Props> = props => {
 
     }, 300), [])
 
-    const [value, setValue] = React.useState<CustomElement[]>(defaultValue)
+    const [value, setValue] = React.useState<CustomElement[]>(deserialize(props.text))
     const lastLabelModeRef = React.useRef<LabelMode | undefined>()
     const lastNonNullSelectionRef = React.useRef<BaseSelection>(null)
 
     React.useEffect(() => {
         debouncedValueChange(value)
     }, [value, debouncedValueChange])
-
-    React.useEffect(() => {
-        switch (props.labelMode) {
-            case LabelMode.EditText: {
-                const newValue = deserialize(props.text)
-                setValue(newValue)
-                break
-            }
-            case LabelMode.Label: {
-                const newValue = convertEntitiesAndTextToTokenizedEditorValue(props.text, props.labeledEntities)
-                setValue(newValue)
-                break
-            }
-        }
-    }, [props.text])
 
     React.useEffect(() => {
         // If label mode is set and has changed
@@ -139,6 +123,8 @@ const EntityLabeler: React.FC<Props> = props => {
                     // Get text from value by serializing and deserializing
                     const newValue = deserialize(serializedValue)
                     setValue(newValue)
+                    props.onChangeText(serializedValue)
+                    props.onChangeEntities([])
                     // Reset picker
                     setPickerProps(p => ({
                         ...p,
@@ -271,13 +257,15 @@ const EditorWrapper = styled.div`
     position: relative;
 
     [data-slate-editor="true"] :is(p, pre) {
-        padding: 0;
-        margin: 0;
+        padding: 1rem;
+        margin: 1rem;
     }
 `
 
 const renderElement = (props: RenderElementProps, mode: DebugMode) => {
     switch (props.element.type) {
+        case 'paragraph':
+            return <ParagraphElement {...props} />
         case 'entity':
             return <EntityElement {...props} mode={mode} />
         case 'token':

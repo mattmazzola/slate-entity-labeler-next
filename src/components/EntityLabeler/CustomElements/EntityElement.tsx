@@ -1,6 +1,6 @@
 import { RenderElementProps } from "slate-react"
 import styled from "styled-components"
-import { DebugMode } from "./models"
+import { DebugMode } from "../models"
 
 type Props = RenderElementProps & {
     mode: DebugMode

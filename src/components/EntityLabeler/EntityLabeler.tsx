@@ -191,6 +191,20 @@ const EntityLabeler: React.FC<Props> = props => {
         }))
     }
 
+    const onEditableKeyDown: React.KeyboardEventHandler<HTMLDivElement> = event => {
+        if (props.labelMode === LabelMode.Label) {
+            console.log({ event })
+            switch (event.key) {
+                case ' ':
+                case 'Enter':
+                case 'Backspace':
+                case 'Delete':
+                    event.preventDefault()
+                    event.stopPropagation()
+            }
+        }
+    }
+
     return (
         <Slate
             editor={editor}
@@ -244,6 +258,7 @@ const EntityLabeler: React.FC<Props> = props => {
                 onBlur={onBlurSlateEditorWrapper}
             >
                 <Editable
+                    onKeyDown={onEditableKeyDown}
                     renderElement={renderElementProps => renderElement(renderElementProps, debugMode)}
                 />
                 <EntityPicker

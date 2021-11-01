@@ -13,11 +13,9 @@ export const COLORS = {
     primary: 'hsl(224deg 30% 40%)',
     secondary: 'hsl(180deg 34% 37%)',
     urgent: 'hsl(0deg 55% 54%)',
-
     picker: {
         highlight: `hsl(80deg 80% 40% / 0.8)`,
     },
-
     entities: {
         base: `hsl(120deg 50% 80% / 0.4)`,
         name: `hsl(120deg 30% 50%)`,

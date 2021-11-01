@@ -61,6 +61,7 @@ const EntityName = styled.div`
         max-width: unset;
         overflow: unset;
         background: var(--color-gray-900);
+        border-right: 4px solid var(--color-gray-900);
         color: var(--color-entities-name-highlight);
         z-index: 2;
     }

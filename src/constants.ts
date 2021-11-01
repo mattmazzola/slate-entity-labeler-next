@@ -21,6 +21,7 @@ export const COLORS = {
     entities: {
         base: `hsl(120deg 50% 80% / 0.4)`,
         name: `hsl(120deg 30% 50%)`,
+        highlight: `hsl(120deg 40% 60%)`,
     },
     token: {
         base: `hsl(180deg 50% 80% / 0.4)`,

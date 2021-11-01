@@ -49,6 +49,7 @@ const GlobalStyles = createGlobalStyle`
 
         --color-entities-base: ${COLORS.entities.base};
         --color-entities-name: ${COLORS.entities.name};
+        --color-entities-name-highlight: ${COLORS.entities.highlight};
         --color-token-base: ${COLORS.token.base};
 
         --font-weight-normal: ${WEIGHTS.normal};

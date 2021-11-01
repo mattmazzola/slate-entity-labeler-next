@@ -56,6 +56,12 @@ const EntityName = styled.div`
     ::before {
         content: attr(data-name);
     }
+
+    :hover {
+        max-width: unset;
+        overflow: unset;
+        background: var(--color-gray-900);
+        color: var(--color-entities-name-highlight);
+        z-index: 2;
+    }
 `
-// When entity names overlap, set background to match background of editor
-// background: var(--color-gray-900);

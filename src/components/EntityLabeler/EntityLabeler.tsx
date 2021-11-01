@@ -50,6 +50,12 @@ const entityLabelerDebugKey = 'entity-labeler'
 const EntityLabeler: React.FC<Props> = props => {
     const editor = React.useMemo(() => withLabels(withReact(createEditor())), [])
     const [pickerProps, setPickerProps] = React.useState<PickerProps>(initialPickerProps)
+    const closePicker = () => {
+        setPickerProps(p => ({
+            ...p,
+            isVisible: false
+        }))
+    }
     const editorWrapperRef = React.useRef<HTMLDivElement>(null)
     const entityPickerRef = React.useRef<HTMLDivElement>(null)
     const debugModeValue = localStorage.getItem(entityLabelerDebugKey)
@@ -65,10 +71,7 @@ const EntityLabeler: React.FC<Props> = props => {
         }
 
         if (Range.isCollapsed(editor.selection)) {
-            setPickerProps(p => ({
-                ...p,
-                isVisible: false
-            }))
+            closePicker()
             return
         }
 
@@ -131,10 +134,7 @@ const EntityLabeler: React.FC<Props> = props => {
                     props.onChangeLabeledText(newLabeledText)
 
                     // Reset picker
-                    setPickerProps(p => ({
-                        ...p,
-                        isVisible: false
-                    }))
+                    closePicker()
                     break
                 }
                 case LabelMode.Label: {
@@ -158,10 +158,7 @@ const EntityLabeler: React.FC<Props> = props => {
             }
         }
 
-        setPickerProps(p => ({
-            ...p,
-            isVisible: false
-        }))
+        closePicker()
     }
 
     const onPickerCreateEntity = () => {
@@ -189,17 +186,17 @@ const EntityLabeler: React.FC<Props> = props => {
         // Reset last selection
         lastNonNullSelectionRef.current = null
 
-        // Close picker
-        setPickerProps(p => ({
-            ...p,
-            isVisible: false
-        }))
+        closePicker()
     }
 
     const onEditableKeyDown: React.KeyboardEventHandler<HTMLDivElement> = event => {
         if (props.labelMode === LabelMode.Label) {
-            console.log({ event })
+            // console.log({ key: event.key })
             switch (event.key) {
+                case 'Escape':
+                    closePicker()
+                    event.preventDefault()
+                    break
                 case ' ':
                 case 'Enter':
                 case 'Backspace':
@@ -208,6 +205,10 @@ const EntityLabeler: React.FC<Props> = props => {
                     event.stopPropagation()
             }
         }
+    }
+
+    const onEditableDrop: React.DragEventHandler<HTMLDivElement> = event => {
+        return false
     }
 
     return (
@@ -265,6 +266,7 @@ const EntityLabeler: React.FC<Props> = props => {
             >
                 <Editable
                     onKeyDown={onEditableKeyDown}
+                    onDrop={onEditableDrop}
                     renderElement={renderElementProps => renderElement(renderElementProps, debugMode)}
                 />
                 <EntityPicker
@@ -274,6 +276,7 @@ const EntityLabeler: React.FC<Props> = props => {
                     entities={props.entities}
                     onClickCreate={onPickerCreateEntity}
                     onSelectEntity={onSelectEntity}
+                    onDismissPicker={() => closePicker()}
                 />
             </EditorWrapper>
         </Slate>

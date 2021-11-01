@@ -19,6 +19,7 @@ type Props = PickerProps & {
     entities: Entity[]
     onClickCreate: () => void
     onSelectEntity: (entity: Entity) => void
+    onDismissPicker: () => void
 }
 
 // This works because options and entity type are the same
@@ -42,6 +43,17 @@ export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forw
         100,
         onSelectOption,
     )
+
+    const onPickerKeyDown: React.KeyboardEventHandler<HTMLDivElement> = event => {
+        switch (event.key) {
+            case 'Escape':
+                props.onDismissPicker()
+                event.preventDefault()
+                return
+        }
+
+        onKeyDown(event)
+    }
 
     const onChangeSearchInput: React.ChangeEventHandler<HTMLInputElement> = event => {
         setSearchText(event.target.value)
@@ -67,7 +79,7 @@ export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forw
             isVisible={props.isVisible}
             position={props.position}
             style={wrapperStyles}
-            onKeyDown={onKeyDown}
+            onKeyDown={onPickerKeyDown}
         >
             <Input type="text" value={searchText} onChange={onChangeSearchInput} />
             <button onClick={props.onClickCreate}>Create Entity</button>

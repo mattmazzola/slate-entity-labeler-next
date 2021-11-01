@@ -50,8 +50,12 @@ const EntityName = styled.div`
     white-space: nowrap;
     font-size: 1.1rem;
     color: var(--color-entities-name);
+    max-width: 100%;
+    overflow: hidden;
 
     ::before {
         content: attr(data-name);
     }
 `
+// When entity names overlap, set background to match background of editor
+// background: var(--color-gray-900);

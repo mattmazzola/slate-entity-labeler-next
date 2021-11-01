@@ -125,7 +125,6 @@ export const CustomEditor = {
             editor,
             { type: 'entity', entityId, entityName } as CustomElement,
             {
-                split: true,
                 at: selection ?? undefined
             }
         )

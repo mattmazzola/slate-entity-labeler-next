@@ -116,11 +116,11 @@ const Wrapper = styled.div<PickerProps>`
 `
 
 const Input = styled.input`
-    border: 1px solid var(--color-grey-300);
-    padding: 0.25rem;
+    border: 1px solid var(--color-gray-500);
+    padding: 0.25em;
 
     :focus {
-        border-color: var(--color-grey-200);
+        border-color: var(--color-gray-300);
     }
 `
 

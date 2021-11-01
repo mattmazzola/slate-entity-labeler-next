@@ -120,7 +120,10 @@ const Wrapper = styled.div<PickerProps>`
     opacity: var(--opacity);
     transform: scale(var(--scale));
     transform-origin: 50% 10px;
-    transition: transform 0.2s cubic-bezier(.3,1.2,.2,1), left 0.2s ease-in-out, opacity 0.7s;
+    transition: transform 0.2s cubic-bezier(.3,1.2,.2,1),
+                top 0.2s ease-in-out,
+                left 0.2s ease-in-out,
+                opacity 0.7s;
 
     position: absolute;
     top: var(--top);

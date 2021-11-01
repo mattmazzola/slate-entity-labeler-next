@@ -20,13 +20,20 @@ export const EntityElement: React.FC<Props> = props => {
         // Should never happen, but will give visual indicator if used by showing "unknown" as name
         : unknonwnEntityElement
 
+    const onClickName: React.MouseEventHandler<HTMLDivElement> = event => {
+        console.log('click', event)
+        event.preventDefault()
+        event.stopPropagation()
+        return false
+    }
+
     return (
         <EntityWrapper
             {...props.attributes}
             data-is-entity={true}
         >
             {props.children}
-            <EntityName data-name={entityElement.entityName} />
+            <EntityName onClick={onClickName} data-name={entityElement.entityName} />
         </EntityWrapper>
     )
 }

@@ -266,6 +266,7 @@ const EntityLabeler: React.FC<Props> = props => {
             >
                 <Editable
                     onKeyDown={onEditableKeyDown}
+                    onDragStart={() => false}
                     onDrop={onEditableDrop}
                     renderElement={renderElementProps => renderElement(renderElementProps, debugMode)}
                 />

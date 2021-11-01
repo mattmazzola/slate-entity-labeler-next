@@ -1,6 +1,6 @@
 import { Editor, BaseText, Transforms, BaseEditor, Node, BaseSelection } from 'slate'
 import { ReactEditor } from 'slate-react'
-import { EntityData } from '.'
+import { EntityData, LabeledText } from '.'
 import { LabeledEntity, EntityPlaceholder, Token, TokenOrEntity, TokenType } from './models'
 
 type CustomElementBase = {
@@ -290,20 +290,15 @@ export const tokenizeText = (
 /**
  * Used for conversion of text and custom entities. For proper usage within extractor editor we need to tokenize the text.
  * This is what makes it different from the below method which doesn't need to be tokenized.
- *
- * @param text plain text
- * @param customEntities array of entities
  */
 export const convertEntitiesAndTextToTokenizedEditorValue = (
-    text: string,
-    customEntities: LabeledEntity<EntityData>[]
+    labeledText: LabeledText<EntityData>
 ) => {
-    const normalizedEntities = normalizeEntities(customEntities)
-    const lines = text.split('\n')
+    const normalizedEntities = normalizeEntities(labeledText.entities)
+    const lines = labeledText.text.split('\n')
 
-    // TODO: Need accumulative token indicies
-    // Currently resets at each line
-    // Alternative is to treat as a single line
+    // Currently tokens are set per line meaning each line resets index
+    // Store last index and incement to have total index
     let lastTokenIndex = 0
     const tokenizedLlines = lines
         .map(line => {
@@ -314,11 +309,6 @@ export const convertEntitiesAndTextToTokenizedEditorValue = (
         })
 
     return convertToSlateValue(tokenizedLlines)
-
-    // const tokenizedLines = tokenizeText(text, tokenizeRegex)
-    // const labeledTokenizedTokens = labelTokens(tokenizedLines, normalizedEntities)
-
-    // return convertToSlateValue([labeledTokenizedTokens])
 }
 
 export const normalizeEntities = <T>(x: T): T => { return x }

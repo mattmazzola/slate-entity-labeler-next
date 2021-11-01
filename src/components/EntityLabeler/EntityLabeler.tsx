@@ -7,6 +7,7 @@ import { convertEntitiesAndTextToTokenizedEditorValue, isGivenElementChildOfOthe
 import { DebugMode, LabeledEntity, LabelMode, EntityData, Entity } from './models'
 import { EntityPicker, PickerProps } from './EntityPicker'
 import { TokenElement, EntityElement, ParagraphElement } from './CustomElements'
+import { LabeledText } from '.'
 
 const getFirstTokenAncestor = (rootNode: Node, path: Path) => {
     const firstTokenAncestor = [...Node.ancestors(rootNode, path, { reverse: true })]
@@ -38,12 +39,10 @@ const initialPickerProps: PickerProps = {
 
 type Props = {
     labelMode: LabelMode
-    text: string,
-    labeledEntities: LabeledEntity<EntityData>[]
+    labeledText: LabeledText<EntityData>,
     entities: Entity[]
     onChangeValue: (value: CustomElement[]) => void
-    onChangeText: (text: string) => void
-    onChangeEntities: (entities: LabeledEntity<EntityData>[]) => void
+    onChangeLabeledText: (labeledText: LabeledText<EntityData>) => void
 }
 
 const entityLabelerDebugKey = 'entity-labeler'
@@ -58,9 +57,8 @@ const EntityLabeler: React.FC<Props> = props => {
         ? DebugMode.Debug
         : DebugMode.Normal
 
-    const debouncedValueChange = React.useCallback(debounce(props.onChangeValue, 300), [props.onChangeValue])
-    const debouncedTextChange = React.useCallback(debounce(props.onChangeText, 300), [props.onChangeText])
-    const debouncedLabeledEntitiesChange = React.useCallback(debounce(props.onChangeEntities, 300), [props.onChangeEntities])
+    const debouncedSlateValueChange = React.useCallback(debounce(props.onChangeValue, 300), [props.onChangeValue])
+    const debouncedLabeledTextChange = React.useCallback(debounce(props.onChangeLabeledText, 300), [props.onChangeLabeledText])
     const debouncedSelectionChange = React.useCallback(debounce(() => {
         if (!editor.selection) {
             return
@@ -105,26 +103,33 @@ const EntityLabeler: React.FC<Props> = props => {
 
     }, 300), [])
 
-    const [value, setValue] = React.useState<CustomElement[]>(deserialize(props.text))
+    const [slateValue, setSlateValue] = React.useState<CustomElement[]>(deserialize(props.labeledText.text))
     const lastLabelModeRef = React.useRef<LabelMode | undefined>()
     const lastNonNullSelectionRef = React.useRef<BaseSelection>(null)
 
     React.useEffect(() => {
-        debouncedValueChange(value)
-    }, [value, debouncedValueChange])
+        debouncedSlateValueChange(slateValue)
+    }, [slateValue, debouncedSlateValueChange])
 
     React.useEffect(() => {
         // If label mode is set and has changed
         if (lastLabelModeRef.current && lastLabelModeRef.current !== props.labelMode) {
-            const serializedValue = serialize(value)
+            const serializedValue = serialize(slateValue)
 
             switch (props.labelMode) {
                 case LabelMode.EditText: {
                     // Get text from value by serializing and deserializing
-                    const newValue = deserialize(serializedValue)
-                    setValue(newValue)
-                    props.onChangeText(serializedValue)
-                    props.onChangeEntities([])
+                    const newSlateValue = deserialize(serializedValue)
+                    setSlateValue(newSlateValue)
+
+                    // Get new lableed text value with reset entities
+                    const newLabeledText: LabeledText<EntityData> = {
+                        text: serializedValue,
+                        entities: []
+                    }
+
+                    props.onChangeLabeledText(newLabeledText)
+
                     // Reset picker
                     setPickerProps(p => ({
                         ...p,
@@ -133,8 +138,8 @@ const EntityLabeler: React.FC<Props> = props => {
                     break
                 }
                 case LabelMode.Label: {
-                    const newValue = convertEntitiesAndTextToTokenizedEditorValue(serializedValue, [])
-                    setValue(newValue)
+                    const slateValue = convertEntitiesAndTextToTokenizedEditorValue(props.labeledText)
+                    setSlateValue(slateValue)
                     break
                 }
             }
@@ -208,7 +213,7 @@ const EntityLabeler: React.FC<Props> = props => {
     return (
         <Slate
             editor={editor}
-            value={value}
+            value={slateValue}
             onChange={value => {
                 // If selection is defined, save selection for use after it is removed due to blur
                 if (editor.selection !== null) {
@@ -233,7 +238,7 @@ const EntityLabeler: React.FC<Props> = props => {
 
                 // Apply values changes
                 const customValue = value as CustomElement[]
-                setValue(customValue)
+                setSlateValue(customValue)
 
                 if (props.labelMode === LabelMode.Label && containsSelectionOperations) {
                     debouncedSelectionChange()
@@ -241,15 +246,16 @@ const EntityLabeler: React.FC<Props> = props => {
 
                 const isAstChange = editor.operations.some(op => selectionOperationType !== op.type)
                 if (isAstChange) {
-                    debouncedValueChange(customValue)
+                    debouncedSlateValueChange(customValue)
 
                     const text = serialize(customValue)
-                    debouncedTextChange(text)
-
-                    if (props.labelMode === LabelMode.Label) {
-                        const entities = CustomEditor.getEntities(editor)
-                        debouncedLabeledEntitiesChange(entities)
+                    const entities = CustomEditor.getEntities(editor)
+                    const newLabeledText: LabeledText<EntityData> = {
+                        text,
+                        entities
                     }
+
+                    debouncedLabeledTextChange(newLabeledText)
                 }
             }}
         >

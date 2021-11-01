@@ -8,6 +8,11 @@ export enum DebugMode {
     Debug = 'Debug'
 }
 
+export type LabeledText<T> = {
+    text: string
+    entities: LabeledEntity<T>[]
+}
+
 export type EntityData = {
     name: string
     text: string

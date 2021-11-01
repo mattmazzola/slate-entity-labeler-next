@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import EntityLabeler, { CustomElement, LabeledEntity, LabelMode, EntityData, Entity } from './components/EntityLabeler'
+import EntityLabeler, { CustomElement, LabeledEntity, LabelMode, EntityData, Entity, LabeledText } from './components/EntityLabeler'
 import SliderOptions from './components/SliderOptions'
 
 const defaultText = `
@@ -8,6 +8,11 @@ OK test this
 Fourth word second word
 Third line, let's test this
 `.trim()
+
+const defaultLabeledText: LabeledText<EntityData> = {
+  text: defaultText,
+  entities: []
+}
 
 const defaultOptions = `
 apples
@@ -23,9 +28,8 @@ plums
 `.trim()
 
 const App: React.FC = () => {
-  const [text, setText] = React.useState<string>(defaultText)
+  const [labeledText, setLabeledText] = React.useState<LabeledText<EntityData>>(defaultLabeledText)
   const [labelMode, setLabelMode] = React.useState<LabelMode>(LabelMode.EditText)
-  const [labeledEntities, setLabeledEntities] = React.useState<LabeledEntity<EntityData>[]>([])
   const [value, setValue] = React.useState<CustomElement[] | undefined>()
   const [optionString, setOptionsString] = React.useState(defaultOptions)
 
@@ -33,12 +37,8 @@ const App: React.FC = () => {
     setValue(value)
   }
 
-  const onChangeText = (text: string) => {
-    setText(text)
-  }
-
-  const onChangeLabeledEntities = (labeledEntities: LabeledEntity<EntityData>[]) => {
-    setLabeledEntities(labeledEntities)
+  const onChangeLabeledText = (labeledText: LabeledText<EntityData>) => {
+    setLabeledText(labeledText)
   }
 
   const onChangeSelectedOption = (option: string) => {
@@ -86,26 +86,24 @@ const App: React.FC = () => {
             onChangeSelectedOption={onChangeSelectedOption}
           />
           <EntityLabeler
-            text={text}
+            labeledText={labeledText}
             labelMode={labelMode}
-            labeledEntities={labeledEntities}
             entities={entities}
             onChangeValue={onChangeValue}
-            onChangeText={onChangeText}
-            onChangeEntities={onChangeLabeledEntities}
+            onChangeLabeledText={onChangeLabeledText}
           />
         </section>
         <DataSection>
           <div>
             <div>
               <h2>Text</h2>
-              {text}
+              {labeledText.text}
             </div>
             <div>
               <h2>Entities:</h2>
               <CodeContainer>
                 <pre>
-                  <code>{labeledEntities ? JSON.stringify(labeledEntities, null, 4) : "Empty"}</code>
+                  <code>{labeledText.entities ? JSON.stringify(labeledText.entities, null, 4) : "Empty"}</code>
                 </pre>
               </CodeContainer>
             </div>

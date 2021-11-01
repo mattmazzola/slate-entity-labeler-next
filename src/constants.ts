@@ -17,7 +17,8 @@ export const COLORS = {
         highlight: `hsl(80deg 80% 40% / 0.8)`,
     },
     entities: {
-        base: `hsl(120deg 50% 80% / 0.4)`,
+        background: `hsl(120deg 50% 80% / 0.2)`,
+        border: `hsl(120deg 50% 80% / 0.4)`,
         name: `hsl(120deg 30% 50%)`,
         highlight: `hsl(120deg 40% 60%)`,
     },

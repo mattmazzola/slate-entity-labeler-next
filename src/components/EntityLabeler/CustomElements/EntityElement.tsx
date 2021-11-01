@@ -36,9 +36,9 @@ const EntityWrapper = styled.div`
     display: inline-block;
     border-radius: 3px;
 
-    background: var(--color-entities-base);
+    background: var(--color-entities-background);
     margin: -1px;
-    border 1px solid var(--color-entities-base);
+    border 1px solid var(--color-entities-border);
 `
 
 // Use pseudo content to prevent selection

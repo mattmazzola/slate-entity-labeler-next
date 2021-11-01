@@ -56,7 +56,7 @@ const OptionWrapper = styled.button`
 
 const Highlight = styled.div`
     border-radius: var(--optionRadius);
-    background: var(--color-highlight);
+    background: var(--color-slider-highlight);
     width: calc(var(--optionWidth) * 1px);
     position: absolute;
     height: 100%;

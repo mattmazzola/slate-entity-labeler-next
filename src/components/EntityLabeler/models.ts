@@ -18,7 +18,7 @@ export enum TokenType {
     EntityPlaceholder = "entityPlaceholder"
 }
 
-export interface IToken {
+export interface Token {
     type: TokenType.Token
     text: string
     isSelectable: boolean
@@ -33,19 +33,20 @@ export interface LabeledEntity<T> {
     data: T
 }
 
-export interface IEntityPlaceholder<T> {
+export interface EntityPlaceholder<T> {
     type: TokenType.EntityPlaceholder
     entity: LabeledEntity<T>
-    tokens: IToken[]
+    tokens: Token[]
 }
 
-export type TokenOrEntity<T> = IToken | IEntityPlaceholder<T>
+export type TokenOrEntity<T> = Token | EntityPlaceholder<T>
 
 export type Entity = {
     id: string
     name: string
 }
 
-export type IOption = {
+export type Option = {
+    id: string
     name: string
 }

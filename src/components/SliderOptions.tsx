@@ -2,13 +2,13 @@ import React from 'react'
 import styled from 'styled-components'
 import { LabelMode } from './EntityLabeler'
 
-type Option = {
+type SliderOption = {
     name: string
     value: LabelMode
 }
 
 type Props = {
-    options: Option[]
+    options: SliderOption[]
     selectedOption: LabelMode
     onChangeSelectedOption: (mode: LabelMode) => void
 }
@@ -20,7 +20,7 @@ export const SliderOptions: React.FC<Props> = (props) => {
         <Wrapper>
             {props.options.map((option, i) => {
                 return (
-                    <Option key={i} onClick={() => props.onChangeSelectedOption(option.value)}>{option.name}</Option>
+                    <OptionWrapper key={i} onClick={() => props.onChangeSelectedOption(option.value)}>{option.name}</OptionWrapper>
                 )
             })}
             <Highlight style={highlightStyles} />
@@ -42,7 +42,7 @@ const Wrapper = styled.div`
     font-size: 18px;
 `
 
-const Option = styled.button`
+const OptionWrapper = styled.button`
     border-radius: var(--optionRadius);
     width: calc(var(--optionWidth) * 1px);
     background: none;
@@ -56,7 +56,7 @@ const Option = styled.button`
 
 const Highlight = styled.div`
     border-radius: var(--optionRadius);
-    background: hsl(80deg 80% 40% / 0.8);
+    background: var(--color-highlight);
     width: calc(var(--optionWidth) * 1px);
     position: absolute;
     height: 100%;

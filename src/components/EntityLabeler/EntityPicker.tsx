@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { Entity } from './models'
 import { FuseMatch } from '../FuseMatch'
 import { usePicker } from './usePicker'
+import { Option } from './models'
 
 type Position = {
     top: number
@@ -17,14 +18,29 @@ export type PickerProps = {
 type Props = PickerProps & {
     entities: Entity[]
     onClickCreate: () => void
-    onSelectOption: (option: string) => void
+    onSelectEntity: (entity: Entity) => void
 }
 
+// This works because options and entity type are the same
+const convertOptionToEntity = (option: Option): Entity => option
+
 export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forwardedRef) => {
-    const { searchText, setSearchText, onKeyDown, matchedOptions, onClickOption, highlightIndex, resetHighlighIndex } = usePicker(
+    const optionsRef = React.useRef<HTMLDivElement>(null)
+
+    const onSelectOption = (option: Option) => {
+        const entity = convertOptionToEntity(option)
+        props.onSelectEntity(entity)
+
+        // Reset options list scroll
+        if (optionsRef.current) {
+            optionsRef.current.scrollTop = 0
+        }
+    }
+
+    const { searchText, setSearchText, onKeyDown, matchedOptions, highlightIndex, resetHighlighIndex } = usePicker(
         props.entities,
         100,
-        optionObject => props.onSelectOption(optionObject.name),
+        onSelectOption,
     )
 
     const onChangeSearchInput: React.ChangeEventHandler<HTMLInputElement> = event => {
@@ -36,7 +52,7 @@ export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forw
             setSearchText('')
             resetHighlighIndex()
         }
-    }, [props.isVisible])
+    }, [props.isVisible, setSearchText, resetHighlighIndex])
 
     const wrapperStyles = {
         '--opacity': props.isVisible ? '1' : '0',
@@ -55,16 +71,16 @@ export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forw
         >
             <Input type="text" value={searchText} onChange={onChangeSearchInput} />
             <button onClick={props.onClickCreate}>Create Entity</button>
-            <OptionsList>
+            <OptionsList ref={optionsRef}>
                 {matchedOptions.map((matchedOption, i) => {
                     return (
-                        <Option
+                        <OptionElement
                             key={i}
-                            onClick={() => onClickOption(matchedOption.original)}
+                            onClick={() => onSelectOption(matchedOption.original)}
                             highlighted={highlightIndex === i}
                         >
                             <FuseMatch matches={matchedOption.matchedStrings} />
-                        </Option>
+                        </OptionElement>
                     )
                 })}
             </OptionsList>
@@ -114,7 +130,7 @@ const OptionsList = styled.div`
     overflow: auto;
 `
 
-const Option = styled.button<{ highlighted: boolean }>`
+const OptionElement = styled.button<{ highlighted: boolean }>`
     padding: 0.25rem;
     cursor: pointer;
     border: none;

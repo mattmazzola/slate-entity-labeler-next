@@ -1,7 +1,7 @@
 import { Editor, BaseText, Transforms, BaseEditor, Node, BaseSelection } from 'slate'
 import { ReactEditor } from 'slate-react'
 import { EntityData } from '.'
-import { LabeledEntity, IEntityPlaceholder, IToken, TokenOrEntity, TokenType } from './models'
+import { LabeledEntity, EntityPlaceholder, Token, TokenOrEntity, TokenType } from './models'
 
 type CustomElementBase = {
     children: (CustomText | CustomElement)[]
@@ -129,6 +129,12 @@ export const CustomEditor = {
                 at: selection ?? undefined
             }
         )
+
+        const start = Editor.start(editor, [0, 0])
+        Transforms.select(editor, {
+            anchor: start,
+            focus: start,
+        })
     }
 }
 
@@ -222,8 +228,8 @@ export const tokenizeText = (
     text: string,
     tokenRegex: RegExp,
     tokenIndex = 0
-): [IToken[], number] => {
-    const tokens: IToken[] = []
+): [Token[], number] => {
+    const tokens: Token[] = []
     if (text.length === 0) {
         return [tokens, tokenIndex]
     }
@@ -236,7 +242,7 @@ export const tokenizeText = (
         // The match is the token separator which is not selectable
         // meaning the non matched is selectable
         const matchedText = text.substring(lastIndex, regexMatchResult.index)
-        const nonSelectableToken: IToken = {
+        const nonSelectableToken: Token = {
             type: TokenType.Token,
             text: matchedText,
             isSelectable: true,
@@ -246,7 +252,7 @@ export const tokenizeText = (
 
         tokenIndex += 1
 
-        const selectableToken: IToken = {
+        const selectableToken: Token = {
             type: TokenType.Token,
             text: regexMatchResult[0],
             isSelectable: false,
@@ -268,7 +274,7 @@ export const tokenizeText = (
     const endIndex = text.length
     const endText = text.substring(lastIndex, endIndex)
     if (endText.length > 0) {
-        const endToken: IToken = {
+        const endToken: Token = {
             type: TokenType.Token,
             text: endText,
             isSelectable: true,
@@ -302,7 +308,7 @@ export const convertEntitiesAndTextToTokenizedEditorValue = (
     let lastTokenIndex = 0
     const tokenizedLlines = lines
         .map(line => {
-            let tokenizedLine: IToken[]
+            let tokenizedLine: Token[]
             [tokenizedLine, lastTokenIndex] = tokenizeText(line, tokenizeRegex, lastTokenIndex)
             const labeledTokens = labelTokens(tokenizedLine, normalizedEntities)
             return labeledTokens
@@ -318,7 +324,7 @@ export const convertEntitiesAndTextToTokenizedEditorValue = (
 
 export const normalizeEntities = <T>(x: T): T => { return x }
 
-export const labelTokens = <T>(tokens: IToken[], customEntities: LabeledEntity<T>[]): TokenOrEntity<T>[] => {
+export const labelTokens = <T>(tokens: Token[], customEntities: LabeledEntity<T>[]): TokenOrEntity<T>[] => {
     return wrapTokensWithEntities(tokens, customEntities)
 }
 
@@ -350,7 +356,7 @@ export const findLastIndex = <T>(xs: T[], f: (x: T) => boolean): number => {
  * @param tokens Array of Tokens
  * @param entities Array of Custom Entities with Token Indicies
  */
-export const wrapTokensWithEntities = <T>(tokens: IToken[], entities: LabeledEntity<T>[]): TokenOrEntity<T>[] => {
+export const wrapTokensWithEntities = <T>(tokens: Token[], entities: LabeledEntity<T>[]): TokenOrEntity<T>[] => {
     // If there are no entities than no work to do, return tokens
     if (entities.length === 0) {
         return tokens
@@ -368,7 +374,7 @@ export const wrapTokensWithEntities = <T>(tokens: IToken[], entities: LabeledEnt
     for (const [i, cet] of Array.from(sortedEntities.entries())) {
         // push labeled tokens
         const endTokenIndex = cet.startTokenIndex + cet.tokenLength
-        const entity: IEntityPlaceholder<T> = {
+        const entity: EntityPlaceholder<T> = {
             type: TokenType.EntityPlaceholder,
             entity: cet,
             tokens: tokens.slice(cet.startTokenIndex, endTokenIndex)
@@ -506,21 +512,4 @@ export const warnAboutOverlappingEntities = (customEntities: LabeledEntity<objec
                 return overlap
             })
     })
-}
-
-const slatejsContentKey = 'slatejs-content-key'
-
-const getSavedValueOrDefault = () => {
-    const storedContent = localStorage.getItem(slatejsContentKey)
-    const value: CustomElement[] = storedContent
-        ? JSON.parse(storedContent)
-        : defaultValue
-
-    return value
-}
-
-const saveValue = (value: CustomElement[]) => {
-    // Save the value to Local Storage.
-    const content = JSON.stringify(value)
-    localStorage.setItem(slatejsContentKey, content)
 }

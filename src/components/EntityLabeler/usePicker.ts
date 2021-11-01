@@ -5,12 +5,12 @@
 import * as React from 'react'
 import Fuse from 'fuse.js'
 import { convertMatchedTextIntoMatchedOption, MatchedOption } from '../FuseMatch'
-import { IOption } from './models'
+import { Option } from './models'
 
 /**
  * See http://fusejs.io/ for information about options meaning and configuration
  */
-const fuseOptions: Fuse.IFuseOptions<IOption> = {
+const fuseOptions: Fuse.IFuseOptions<Option> = {
     shouldSort: true,
     includeMatches: true,
     threshold: 0.4,
@@ -28,7 +28,7 @@ const id: IndexFunction = (x: number) => x
 const increment: IndexFunction = (x: number, limit: number) => (x + 1) > limit ? 0 : x + 1
 const decrement: IndexFunction = (x: number, limit: number) => (x - 1) < 0 ? limit : x - 1
 
-const convertOptionToMatchedOption = (option: IOption): MatchedOption<IOption> => {
+const convertOptionToMatchedOption = (option: Option): MatchedOption<Option> => {
     return {
         highlighted: false,
         matchedStrings: [{ text: option.name, matched: false }],
@@ -38,10 +38,10 @@ const convertOptionToMatchedOption = (option: IOption): MatchedOption<IOption> =
 
 const getMatchedOptions = (
     searchText: string,
-    options: IOption[],
-    fuse: Fuse<IOption>,
+    options: Option[],
+    fuse: Fuse<Option>,
     maxDisplayedOptions: number
-): MatchedOption<IOption>[] => {
+): MatchedOption<Option>[] => {
     return searchText.trim().length === 0
         ? options
             .filter((_, i) => i < maxDisplayedOptions)
@@ -52,21 +52,20 @@ const getMatchedOptions = (
 }
 
 export const usePicker = (
-    options: IOption[],
+    options: Option[],
     maxDisplayedOptions: number,
-    onSelectOption: (option: IOption) => void,
+    onSelectOption: (option: Option) => void,
 ) => {
     const fuseRef = React.useRef(new Fuse(options, fuseOptions))
     const [searchText, setSearchText] = React.useState('')
     const [highlightIndex, setHighlighIndex] = React.useState(0)
-    const [matchedOptions, setMatchedOptions] = React.useState<MatchedOption<IOption>[]>([])
+    const [matchedOptions, setMatchedOptions] = React.useState<MatchedOption<Option>[]>([])
 
     const resetHighlighIndex = () => setHighlighIndex(0)
-    const onClickOption = (option: IOption) => onSelectOption(option)
     const onSelectHighlightedOption = () => {
-        const option = matchedOptions[highlightIndex]
-        if (option) {
-            onSelectOption(option.original)
+        const matchedOption = matchedOptions[highlightIndex]
+        if (matchedOption) {
+            onSelectOption(matchedOption.original)
         }
     }
 
@@ -74,7 +73,7 @@ export const usePicker = (
         fuseRef.current = new Fuse(options, fuseOptions)
         const matchedOptions = getMatchedOptions(searchText, options, fuseRef.current, maxDisplayedOptions)
         setMatchedOptions(matchedOptions)
-    }, [options.length, searchText])
+    }, [options.length, searchText, maxDisplayedOptions])
 
     // Ensure highlight index is within bounds
     React.useEffect(() => {
@@ -86,7 +85,7 @@ export const usePicker = (
         // Don't allow an index less than 0 (if options length is 0)
         min = Math.max(0, min)
         setHighlighIndex(min)
-    }, [matchedOptions.length])
+    }, [matchedOptions.length, highlightIndex])
 
     const onKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
         let modifyFunction: IndexFunction = id
@@ -98,8 +97,9 @@ export const usePicker = (
             case 'ArrowDown':
                 modifyFunction = increment
                 break
+            // TODO: Should we allow tab completion?
+            // case 'Tab':
             case 'Enter':
-            case 'Tab':
                 // Only simulate completion on 'forward' tab
                 if (event.shiftKey) {
                     return
@@ -120,7 +120,6 @@ export const usePicker = (
         setSearchText,
         onKeyDown,
         matchedOptions,
-        onClickOption,
         highlightIndex,
         resetHighlighIndex,
     }

@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { Ancestor, BaseSelection, createEditor, Node, NodeEntry, Path, Point, Range, Transforms } from 'slate'
 import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from 'slate-react'
 
-import { convertEntitiesAndTextToTokenizedEditorValue, isGivenElementChildOfOtherElement, CustomEditor, CustomText, deserialize, debounce, defaultValue, CustomElement, serialize, withLabels } from './utils'
+import { convertEntitiesAndTextToTokenizedEditorValue, isGivenElementChildOfOtherElement, CustomEditor, CustomText, deserialize, debounce, CustomElement, serialize, withLabels } from './utils'
 import { DebugMode, LabeledEntity, LabelMode, EntityData, Entity } from './models'
 import { EntityPicker, PickerProps } from './EntityPicker'
 import { TokenElement, EntityElement, ParagraphElement } from './CustomElements'
@@ -164,17 +164,27 @@ const EntityLabeler: React.FC<Props> = props => {
         // But for now just create random entity
         const randomValue = Math.floor(Math.random() * 100)
         const entityPrefix = `entityName-${randomValue}`
-        onClickPickerOption(entityPrefix)
+        const mockEntity: Entity = {
+            id: entityPrefix,
+            name: entityPrefix
+        }
+
+        onSelectEntity(mockEntity)
     }
 
-    const onClickPickerOption = (entityPrefix: string) => {
-        const randomValue = Math.floor(Math.random() * 10000)
-        const entityId = `${entityPrefix}-${randomValue}`
-        const entityName = `${entityPrefix}-${randomValue}`
+    const onSelectEntity = (entity: Entity) => {
         const selection = editor.selection ?? lastNonNullSelectionRef.current
+        if (selection && Range.isCollapsed(selection)) {
+            return
+        }
 
-        CustomEditor.toggleBlockEntity(editor, entityId, entityName, selection)
+        // Create entity around selection
+        CustomEditor.toggleBlockEntity(editor, entity.id, entity.name, selection)
 
+        // Reset last selection
+        lastNonNullSelectionRef.current = null
+
+        // Close picker
         setPickerProps(p => ({
             ...p,
             isVisible: false
@@ -242,7 +252,7 @@ const EntityLabeler: React.FC<Props> = props => {
                     position={pickerProps.position}
                     entities={props.entities}
                     onClickCreate={onPickerCreateEntity}
-                    onSelectOption={onClickPickerOption}
+                    onSelectEntity={onSelectEntity}
                 />
             </EditorWrapper>
         </Slate>

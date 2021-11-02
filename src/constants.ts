@@ -13,8 +13,12 @@ export const COLORS = {
     primary: 'hsl(224deg 30% 40%)',
     secondary: 'hsl(180deg 34% 37%)',
     urgent: 'hsl(0deg 55% 54%)',
-    picker: {
+    slider: {
         highlight: `hsl(80deg 80% 40% / 0.8)`,
+    },
+    picker: {
+        highlight: 'rgba(187, 255, 187, 1.0)',
+        hover: 'rgba(187, 255, 187, 0.5)',
     },
     entities: {
         background: `hsl(120deg 50% 80% / 0.2)`,

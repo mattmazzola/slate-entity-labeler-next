@@ -25,6 +25,19 @@ type Props = PickerProps & {
 // This works because options and entity type are the same
 const convertOptionToEntity = (option: Option): Entity => option
 
+const scrollHighlightedElementIntoView = (resultsElement: HTMLDivElement) => {
+    const highlightedElement = resultsElement
+        ? resultsElement.querySelector('[data-is-highlighted="true"]') as HTMLDivElement
+        : null
+
+    if (highlightedElement) {
+        highlightedElement.scrollIntoView({
+            behavior: 'smooth',
+            block: "nearest"
+        })
+    }
+}
+
 export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forwardedRef) => {
     const optionsRef = React.useRef<HTMLDivElement>(null)
 
@@ -43,6 +56,12 @@ export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forw
         100,
         onSelectOption,
     )
+
+    React.useEffect(() => {
+        if (optionsRef.current) {
+            scrollHighlightedElementIntoView(optionsRef.current)
+        }
+    }, [highlightIndex, optionsRef.current])
 
     const onPickerKeyDown: React.KeyboardEventHandler<HTMLDivElement> = event => {
         switch (event.key) {
@@ -85,11 +104,13 @@ export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forw
             <button onClick={props.onClickCreate}>Create Entity</button>
             <OptionsList ref={optionsRef}>
                 {matchedOptions.map((matchedOption, i) => {
+                    const isHighlighted = highlightIndex === i
                     return (
                         <OptionElement
                             key={i}
                             onClick={() => onSelectOption(matchedOption.original)}
-                            highlighted={highlightIndex === i}
+                            highlighted={isHighlighted}
+                            data-is-highlighted={isHighlighted}
                         >
                             <FuseMatch matches={matchedOption.matchedStrings} />
                         </OptionElement>
@@ -150,11 +171,16 @@ const OptionElement = styled.button<{ highlighted: boolean }>`
     cursor: pointer;
     border: none;
     border-radius: 3px;
-    background: ${props => props.highlighted ? `rgba(187, 255, 187, 1.0);` : 'none;'}
+    transition: background 800ms ease-out;
 
-    :hover,
+    &[data-is-highlighted="true"],
     :focus {
-        background: rgba(187, 255, 187, 0.5);
+        transition: background 400ms ease-in;
+        background: var(--color-picker-highlighted);
+    }
+
+    :hover:not([data-is-highlighted="true"]) {
+        background: var(--color-picker-hover);
         outline: none;
     }
 `

@@ -15,5 +15,5 @@ export const ParagraphElement: React.FC<Props> = props => {
 }
 
 const ParagraphWrapper = styled.div`
-    padding: 0.8em 0 0 0;
+    padding: 0.9em 0 0 0;
 `

@@ -296,6 +296,8 @@ export const convertEntitiesAndTextToTokenizedEditorValue = (
 ) => {
     const normalizedEntities = normalizeEntities(labeledText.entities)
     const lines = labeledText.text.split('\n')
+        // Remove blank lines
+        .filter(line => line.length > 0)
 
     // Currently tokens are set per line meaning each line resets index
     // Store last index and incement to have total index
@@ -334,16 +336,15 @@ export const findLastIndex = <T>(xs: T[], f: (x: T) => boolean): number => {
 }
 
 /**
- * (IToken[], ICustomEntityWithTokenIndicies[]) => (IToken | IEntityPlaceholder)[]
  * Given tokens and custom entities associated with tokens, replace tokens with entities placeholders
  * These entity placeholders eventually get converted to slate inline segments
  *
  * Simplified visual
- * [token0, token1, token2, token3, token4, token5, token6], [{token6, [1, 3]}]
+ * [token0, token1, token2, token3, token4, token5, token6], [{ text: token6, startTokenIndex: 1, tokenLength: 3 }]
  * [token0, [token1, token2, token3], token4, token5, token6]
  *
  * @param tokens Array of Tokens
- * @param entities Array of Custom Entities with Token Indicies
+ * @param entities Array of Entities with Token Indices
  */
 export const wrapTokensWithEntities = <T>(tokens: Token[], entities: LabeledEntity<T>[]): TokenOrEntity<T>[] => {
     // If there are no entities than no work to do, return tokens

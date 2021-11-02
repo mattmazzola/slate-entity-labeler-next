@@ -45,8 +45,10 @@ const GlobalStyles = createGlobalStyle`
         --color-secondary: ${COLORS.secondary};
         --color-urgent: ${COLORS.urgent};
 
-        --color-slider-highlight: ${COLORS.picker.highlight};
+        --color-slider-highlight: ${COLORS.slider.highlight};
 
+        --color-picker-highlighted: ${COLORS.picker.highlight};
+        --color-picker-hover: ${COLORS.picker.hover};
         --color-entities-background: ${COLORS.entities.background};
         --color-entities-border: ${COLORS.entities.border};
         --color-entities-name: ${COLORS.entities.name};

@@ -146,9 +146,12 @@ const Wrapper = styled.div<PickerProps>`
                 left 0.2s ease-in-out,
                 opacity 0.7s;
 
+    will-change: transform;
+
     position: absolute;
     top: var(--top);
     left: var(--left);
+    overscroll-behavior: contain;
 `
 
 const Input = styled.input`

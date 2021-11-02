@@ -100,10 +100,18 @@ const App: React.FC = () => {
               {labeledText.text}
             </div>
             <div>
-              <h2>Entities:</h2>
+              <h2>Labeled Entities:</h2>
               <CodeContainer>
                 <pre>
                   <code>{labeledText.entities ? JSON.stringify(labeledText.entities, null, 4) : "Empty"}</code>
+                </pre>
+              </CodeContainer>
+            </div>
+            <div>
+              <h2>Entities:</h2>
+              <CodeContainer>
+                <pre>
+                  <code>{entities ? JSON.stringify(entities, null, 4) : "Empty"}</code>
                 </pre>
               </CodeContainer>
             </div>

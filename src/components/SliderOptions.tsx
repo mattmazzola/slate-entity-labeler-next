@@ -65,5 +65,5 @@ const Highlight = styled.div`
 
     transform: translate(calc((var(--optionsIndex) * var(--optionGap)) + (var(--optionsIndex) * var(--optionWidth) * 1px)));
     transition: transform 200ms;
-
+    will-change: transform;
 `

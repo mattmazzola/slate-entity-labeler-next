@@ -44,12 +44,14 @@ export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forw
     const onSelectOption = (option: Option) => {
         const entity = convertOptionToEntity(option)
         props.onSelectEntity(entity)
+    }
 
+    React.useEffect(() => {
         // Reset options list scroll
-        if (optionsRef.current) {
+        if (props.isVisible && optionsRef.current) {
             optionsRef.current.scrollTop = 0
         }
-    }
+    }, [props.isVisible])
 
     const { searchText, setSearchText, onKeyDown, matchedOptions, highlightIndex, resetHighlighIndex } = usePicker(
         props.entities,

@@ -176,11 +176,11 @@ const OptionElement = styled.button<{ highlighted: boolean }>`
     cursor: pointer;
     border: none;
     border-radius: 3px;
-    transition: background 800ms ease-out;
+    transition: background 0.6s ease-out;
 
     &[data-is-highlighted="true"],
     :focus {
-        transition: background 400ms ease-in;
+        transition: background 0.3s ease-in;
         background: var(--color-picker-highlighted);
     }
 

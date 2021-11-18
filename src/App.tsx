@@ -65,7 +65,7 @@ const App: React.FC = () => {
     .map<Entity>((o, i) => {
       return {
         name: o,
-        id: `${o.toLowerCase()}-${i}`
+        id: `${o.toLowerCase()}-id-${i}`
       }
     })
 

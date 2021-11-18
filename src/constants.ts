@@ -17,8 +17,8 @@ export const COLORS = {
         highlight: `hsl(80deg 80% 40% / 0.8)`,
     },
     picker: {
-        highlight: 'rgba(187, 255, 187, 1.0)',
-        hover: 'rgba(187, 255, 187, 0.5)',
+        highlight: 'hsl(120deg 40% 70%)',
+        hover: 'hsl(120deg 45% 80%)',
     },
     entities: {
         background: `hsl(120deg 50% 80% / 0.2)`,

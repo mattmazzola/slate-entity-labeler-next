@@ -70,7 +70,7 @@ export const usePicker = (
     }
 
     React.useEffect(() => {
-        fuseRef.current = new Fuse(options, fuseOptions)
+        fuseRef.current.setCollection(options)
         const matchedOptions = getMatchedOptions(searchText, options, fuseRef.current, maxDisplayedOptions)
         setMatchedOptions(matchedOptions)
     }, [options.length, searchText, maxDisplayedOptions])

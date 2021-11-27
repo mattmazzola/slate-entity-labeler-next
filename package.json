@@ -2,6 +2,16 @@
   "name": "slate-entity-labeler",
   "version": "0.1.0",
   "private": true,
+  "author": {
+    "name": "Matt Mazzola",
+    "email": "mattmazzola@live.com"
+  },
+  "homepage": "https://mattmazzola.github.io/slate-entity-labeler-next",
+  "main": "build/dist/components/index.js",
+  "types": "build/dist/components/index.d.ts",
+  "file": [
+    "bulid"
+  ],
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
@@ -24,8 +34,10 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:lib": "tsc",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "prepublishOnly": "npm run build:lib"
   },
   "eslintConfig": {
     "extends": "react-app"

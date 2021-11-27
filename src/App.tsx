@@ -2,6 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import EntityLabeler, { CustomElement, LabeledEntity, LabelMode, EntityData, Entity, LabeledText } from './components/EntityLabeler'
 import SliderOptions from './components/SliderOptions'
+import { v4 as uuid } from 'uuid'
 
 const defaultText = `
 OK test this
@@ -60,14 +61,14 @@ const App: React.FC = () => {
     }
   ]
 
-  const entities = optionString.split('\n')
+  const entities = React.useMemo(() => optionString.split('\n')
     .filter(o => o.length > 0)
     .map<Entity>((o, i) => {
       return {
         name: o,
-        id: `${o.toLowerCase()}-id-${i}`
+        id: uuid()
       }
-    })
+    }), [optionString])
 
   return (
     <Wrapper>
@@ -176,7 +177,7 @@ const CodeContainer = styled.div`
   border-radius: 4px;
   border: 1px solid var(--color-white);
   font-size: 1rem;
-  padding: 0.5em;
+  padding: 0.25em;
 
   & pre {
     margin: 0;

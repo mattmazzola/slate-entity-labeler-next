@@ -22,7 +22,7 @@ blueberries
 pickles
 cucumbers
 olives
-rasberries
+raspberries
 watermelons
 plums
 `.trim()
@@ -71,39 +71,39 @@ const App: React.FC = () => {
 
   return (
     <Wrapper>
-      <header>
+      <Header>
         <h1>Slate Entity Labeler</h1>
-      </header>
+      </Header>
       <main>
-        <section>
-          <h2>Options</h2>
-          <EntityTextarea value={optionString} onChange={onChangeOptionsString} rows={5} />
-        </section>
-        <section>
-          <SliderOptions
-            options={labelModeOptions}
-            selectedOption={labelMode}
-            onChangeSelectedOption={onChangeSelectedOption}
-          />
-          <EntityLabeler
-            labeledText={labeledText}
-            labelMode={labelMode}
-            entities={entities}
-            onChangeValue={onChangeValue}
-            onChangeLabeledText={onChangeLabeledText}
-          />
-        </section>
+        <ComponentSection>
+          <Column>
+            <h2>Options:</h2>
+            <EntityTextarea value={optionString} onChange={onChangeOptionsString} rows={5} />
+          </Column>
+          <Column>
+            <h2>Labeler:</h2>
+            <EntityLabeler
+              labeledText={labeledText}
+              labelMode={labelMode}
+              entities={entities}
+              onChangeValue={onChangeValue}
+              onChangeLabeledText={onChangeLabeledText}
+            />
+            <SliderOptions
+              options={labelModeOptions}
+              selectedOption={labelMode}
+              onChangeSelectedOption={onChangeSelectedOption}
+            />
+          </Column>
+        </ComponentSection>
+
         <DataSection>
           <div>
             <div>
-              <h2>Text</h2>
-              {labeledText.text}
-            </div>
-            <div>
-              <h2>Labeled Entities:</h2>
+              <h2>Labeled Text Value:</h2>
               <CodeContainer>
                 <pre>
-                  <code>{labeledText.entities ? JSON.stringify(labeledText.entities, null, 4) : "Empty"}</code>
+                  <code>{labeledText ? JSON.stringify(labeledText, null, 4) : "Empty"}</code>
                 </pre>
               </CodeContainer>
             </div>
@@ -118,7 +118,7 @@ const App: React.FC = () => {
           </div>
 
           <ValueDiv>
-            <h2>Value:</h2>
+            <h2>Slate Value:</h2>
             <CodeContainer>
               <pre>
                 <code>{value ? JSON.stringify(value, null, 4) : "Empty"}</code>
@@ -135,6 +135,22 @@ const Wrapper = styled.div`
   padding: 2rem;
   font-size: 2rem;
   position: relative;
+`
+
+const Header = styled.header`
+  text-align: center;
+`
+
+const ComponentSection = styled.section`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+`
+
+const Column = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 `
 
 const DataSection = styled.section`
@@ -157,9 +173,10 @@ const EntityTextarea = styled.textarea`
 `
 
 const CodeContainer = styled.div`
-  border-radius: 3px;
+  border-radius: 4px;
   border: 1px solid var(--color-white);
   font-size: 1rem;
+  padding: 0.5em;
 
   & pre {
     margin: 0;

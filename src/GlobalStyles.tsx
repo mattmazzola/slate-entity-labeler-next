@@ -33,6 +33,11 @@ const GlobalStyles = createGlobalStyle`
         min-height: 100%;
     }
 
+    h1, h2, h3 {
+        line-height: 1.5;
+        margin: 0.25em 0;
+    }
+
     :root {
         --color-white: ${COLORS.white};
         --color-offblack: ${COLORS.offblack};

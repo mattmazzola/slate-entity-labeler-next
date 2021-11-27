@@ -33,9 +33,11 @@ export default SliderOptions
 const Wrapper = styled.div`
     --optionWidth: 80;
     --optionPadding: 5px;
-    --optionRadius: 12px;
+    --optionRadius: 3000px;
     --optionGap: 0.5rem;
 
+    border-radius: var(--optionRadius);
+    border: 1px solid var(--color-slider-highlight);
     display: flex;
     gap: var(--optionGap);
     position: relative;

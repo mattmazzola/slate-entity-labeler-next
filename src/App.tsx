@@ -171,6 +171,7 @@ const EntityTextarea = styled.textarea`
   font: var(--font-family-sans-serif);
   background: transparent;
   color: var(--color-gray-100);
+  resize: none;
 `
 
 const CodeContainer = styled.div`

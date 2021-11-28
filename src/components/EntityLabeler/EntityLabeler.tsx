@@ -4,7 +4,7 @@ import { Ancestor, BaseSelection, createEditor, Node, NodeEntry, Path, Point, Ra
 import { Slate, Editable, withReact, DefaultElement, RenderElementProps } from 'slate-react'
 
 import { convertEntitiesAndTextToTokenizedEditorValue, isGivenElementChildOfOtherElement, CustomEditor, CustomText, deserialize, debounce, CustomElement, serialize, withLabels } from './utils'
-import { DebugMode, LabeledEntity, LabelMode, EntityData, Entity } from './models'
+import { DebugMode, LabelMode, EntityData, Entity } from './models'
 import { EntityPicker, PickerProps } from './EntityPicker'
 import { TokenElement, EntityElement, ParagraphElement } from './CustomElements'
 import { LabeledText } from '.'
@@ -106,7 +106,11 @@ const EntityLabeler: React.FC<Props> = props => {
 
     }, 300), [])
 
-    const [slateValue, setSlateValue] = React.useState<CustomElement[]>(deserialize(props.labeledText.text))
+    const [slateValue, setSlateValue] = React.useState<CustomElement[]>(() => {
+        return props.labelMode === LabelMode.Label
+            ? convertEntitiesAndTextToTokenizedEditorValue(props.labeledText)
+            : deserialize(props.labeledText.text)
+    })
     const lastLabelModeRef = React.useRef<LabelMode | undefined>()
     const lastNonNullSelectionRef = React.useRef<BaseSelection>(null)
 
@@ -125,7 +129,7 @@ const EntityLabeler: React.FC<Props> = props => {
                     const newSlateValue = deserialize(serializedValue)
                     setSlateValue(newSlateValue)
 
-                    // Get new lableed text value with reset entities
+                    // Get new labeled text value with reset entities
                     const newLabeledText: LabeledText<EntityData> = {
                         text: serializedValue,
                         entities: []
@@ -344,7 +348,7 @@ function expandSelection(
     endTokenEntry: NodeEntry<Ancestor>,
     editor: CustomEditor
 ) {
-    const [_, startTokenPath] = startTokenEntry
+    const [, startTokenPath] = startTokenEntry
     // Get point at start of start token
     const startPoint: Point = {
         path: startTokenPath,

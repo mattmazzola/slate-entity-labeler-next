@@ -73,7 +73,7 @@ export const usePicker = (
         fuseRef.current.setCollection(options)
         const matchedOptions = getMatchedOptions(searchText, options, fuseRef.current, maxDisplayedOptions)
         setMatchedOptions(matchedOptions)
-    }, [options.length, searchText, maxDisplayedOptions])
+    }, [options, searchText, maxDisplayedOptions])
 
     // Ensure highlight index is within bounds
     React.useEffect(() => {

@@ -63,7 +63,7 @@ export const EntityPicker = React.forwardRef<HTMLDivElement, Props>((props, forw
         if (optionsRef.current) {
             scrollHighlightedElementIntoView(optionsRef.current)
         }
-    }, [highlightIndex, optionsRef.current])
+    }, [highlightIndex])
 
     const onPickerKeyDown: React.KeyboardEventHandler<HTMLDivElement> = event => {
         switch (event.key) {
@@ -138,7 +138,7 @@ const Wrapper = styled.div<PickerProps>`
     max-width: 300px;
     max-height: 200px;
     padding: 0.25em;
-    z-index: 1;
+    z-index: 3;
 
     opacity: var(--opacity);
     transform: scale(var(--scale));
@@ -154,10 +154,12 @@ const Wrapper = styled.div<PickerProps>`
     top: var(--top);
     left: var(--left);
     overscroll-behavior: contain;
+    isolation: isolate;
 `
 
 const Input = styled.input`
     border: 1px solid var(--color-gray-500);
+    border-radius: 3px;
     padding: 0.25em;
 
     :focus {
@@ -169,6 +171,22 @@ const OptionsList = styled.div`
     display: flex;
     flex-direction: column;
     overflow: auto;
+
+    scrollbar-color: var(--color-gray-900) var(--color-gray-300);
+    
+    ::-webkit-scrollbar {
+        width: 10px;
+        background-color: white;
+    }
+    ::-webkit-scrollbar-thumb {
+        background-color: var(--color-gray-300);
+        border: 2px solid var(--color-gray-300);
+        border-radius: 1000px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background-color: var(--color-gray-500);
+        border-color: var(--color-gray-500);
+    }
 `
 
 const OptionElement = styled.button<{ highlighted: boolean }>`
@@ -177,6 +195,9 @@ const OptionElement = styled.button<{ highlighted: boolean }>`
     border: none;
     border-radius: 3px;
     transition: background 0.6s ease-out;
+    font: 12px;
+    line-height: 1.2;
+    background: transparent;
 
     &[data-is-highlighted="true"],
     :focus {

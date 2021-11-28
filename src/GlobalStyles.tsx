@@ -63,7 +63,7 @@ const GlobalStyles = createGlobalStyle`
     }
 
     body {
-        scrollbar-color: red blue;
+        scrollbar-color: var(--color-gray-900) var(--color-gray-300);
     }
     
     ::-webkit-scrollbar {

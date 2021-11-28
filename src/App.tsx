@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import EntityLabeler, { CustomElement, LabeledEntity, LabelMode, EntityData, Entity, LabeledText } from './components/EntityLabeler'
+import EntityLabeler, { CustomElement, LabelMode, EntityData, Entity, LabeledText } from './components/EntityLabeler'
 import SliderOptions from './components/SliderOptions'
 import { v4 as uuid } from 'uuid'
 
@@ -10,10 +10,7 @@ Fourth word second word
 Third line, let's test this
 `.trim()
 
-const defaultLabeledText: LabeledText<EntityData> = {
-  text: defaultText,
-  entities: []
-}
+
 
 const defaultOptions = `
 apples
@@ -28,9 +25,40 @@ watermelons
 plums
 `.trim()
 
+const defaultEntities = defaultOptions.split('\n')
+  .filter(o => o.length > 0)
+  .map<Entity>((o, i) => {
+    return {
+      name: o,
+      id: uuid()
+    }
+  })
+
 const App: React.FC = () => {
-  const [labeledText, setLabeledText] = React.useState<LabeledText<EntityData>>(defaultLabeledText)
-  const [labelMode, setLabelMode] = React.useState<LabelMode>(LabelMode.EditText)
+  const [entities, setEntities] = React.useState(defaultEntities)
+  const [labeledText, setLabeledText] = React.useState<LabeledText<EntityData>>(() => {
+    const firstEntity = entities[0]
+    return {
+      text: defaultText,
+      entities: [
+        {
+          id: firstEntity.id,
+          startTokenIndex: 2,
+          tokenLength: 1,
+          data: {
+            name: firstEntity.name,
+            text: "text this"
+          }
+        }
+      ]
+    }
+  })
+
+  const [labelMode, setLabelMode] = React.useState<LabelMode>(() => {
+    return labeledText.entities.length > 0
+      ? LabelMode.Label
+      : LabelMode.EditText
+  })
   const [value, setValue] = React.useState<CustomElement[] | undefined>()
   const [optionString, setOptionsString] = React.useState(defaultOptions)
 
@@ -61,14 +89,19 @@ const App: React.FC = () => {
     }
   ]
 
-  const entities = React.useMemo(() => optionString.split('\n')
-    .filter(o => o.length > 0)
-    .map<Entity>((o, i) => {
-      return {
-        name: o,
-        id: uuid()
-      }
-    }), [optionString])
+
+  React.useEffect(() => {
+    const newEntities = optionString.split('\n')
+      .filter(o => o.length > 0)
+      .map<Entity>((o, i) => {
+        return {
+          name: o,
+          id: uuid()
+        }
+      })
+
+    setEntities(newEntities)
+  }, [optionString])
 
   return (
     <Wrapper>

@@ -59,6 +59,7 @@ const EntityName = styled.div`
     color: var(--color-entities-name);
     max-width: 100%;
     overflow: hidden;
+    border-radius: 6px;
 
     ::before {
         content: attr(data-name);

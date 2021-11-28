@@ -89,7 +89,7 @@ export const CustomEditor = {
                 }
 
                 // If you only select a single token, Transforms.wrapNodes will wrap the text
-                // inside the token nstead of wrapping the token
+                // inside the token instead of wrapping the token
                 // In this case, we get the parent token and then reinsert it into the entity
                 else {
                     const parent = Node.parent(editor, path)
@@ -294,23 +294,25 @@ export const tokenizeText = (
 export const convertEntitiesAndTextToTokenizedEditorValue = (
     labeledText: LabeledText<EntityData>
 ) => {
-    const normalizedEntities = normalizeEntities(labeledText.entities)
+    const entities = [...labeledText.entities]
     const lines = labeledText.text.split('\n')
         // Remove blank lines
         .filter(line => line.length > 0)
 
     // Currently tokens are set per line meaning each line resets index
-    // Store last index and incement to have total index
+    // Store last index and increment to have total index
     let lastTokenIndex = 0
-    const tokenizedLlines = lines
+    const tokenizedLines = lines
         .map(line => {
             let tokenizedLine: Token[]
-            [tokenizedLine, lastTokenIndex] = tokenizeText(line, tokenizeRegex, lastTokenIndex)
-            const labeledTokens = labelTokens(tokenizedLine, normalizedEntities)
+            const previousTokenIndex = lastTokenIndex;
+            [tokenizedLine, lastTokenIndex] = tokenizeText(line, tokenizeRegex, previousTokenIndex)
+            const entitiesForLine = entities.filter(e => previousTokenIndex <= e.startTokenIndex && e.startTokenIndex <= lastTokenIndex)
+            const labeledTokens = labelTokens(tokenizedLine, entitiesForLine)
             return labeledTokens
         })
 
-    return convertToSlateValue(tokenizedLlines)
+    return convertToSlateValue(tokenizedLines)
 }
 
 export const normalizeEntities = <T>(x: T): T => { return x }
@@ -426,14 +428,14 @@ export const convertToSlateValue = (tokensWithEntities: TokenOrEntity<EntityData
                         }
                     })
 
-                const entityElemnt: CustomElement = {
+                const entityElement: CustomElement = {
                     type: "entity",
                     entityId: tokenOrEntity.entity.id,
                     entityName: tokenOrEntity.entity.data.name,
                     children: tokenElements
                 }
 
-                tokensOrEntityElements.push(entityElemnt)
+                tokensOrEntityElements.push(entityElement)
             }
             else {
                 if (tokenOrEntity.isSelectable) {

@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.js": "/slate-entity-labeler-next/static/js/main.0e252578.chunk.js",
-    "main.js.map": "/slate-entity-labeler-next/static/js/main.0e252578.chunk.js.map",
+    "main.js": "/slate-entity-labeler-next/static/js/main.11b7ec0c.chunk.js",
+    "main.js.map": "/slate-entity-labeler-next/static/js/main.11b7ec0c.chunk.js.map",
     "runtime-main.js": "/slate-entity-labeler-next/static/js/runtime-main.4d8afc4c.js",
     "runtime-main.js.map": "/slate-entity-labeler-next/static/js/runtime-main.4d8afc4c.js.map",
     "static/js/2.62abf7ea.chunk.js": "/slate-entity-labeler-next/static/js/2.62abf7ea.chunk.js",
@@ -12,6 +12,6 @@
   "entrypoints": [
     "static/js/runtime-main.4d8afc4c.js",
     "static/js/2.62abf7ea.chunk.js",
-    "static/js/main.0e252578.chunk.js"
+    "static/js/main.11b7ec0c.chunk.js"
   ]
 }
